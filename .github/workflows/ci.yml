@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  pull_request:
+    types: ["opened", "syncronize"]
+  push:
+    branches: ["main"]
+
+permissions: {}
+
+jobs:
+  # Lints this repos CI under `.github/workflows/`
+  lint-actions:
+    uses: ./workflows/lint-actions.yaml
+    secrets:
+      gh-token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Lints the reusable workflows under `workflows/`
+  lint-reusable-actions:
+    uses: ./workflows/lint-actions.yaml
+    with:
+      path: workflows/*.yaml
+    secrets:
+      gh-token: ${{ secrets.GITHUB_TOKEN }}
