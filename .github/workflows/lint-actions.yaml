@@ -60,6 +60,6 @@ jobs:
     - name: Lint
       run: zizmor ${{ env.ZIZMOR_PATH }} ${{ env.ZIZMOR_OPTIONS }}
       env:
-        GH_TOKEN: ${{ secrets.gh-token }} 
+        GH_TOKEN: ${{ secrets.gh-token }}
         ZIZMOR_PATH: ${{ inputs.path }}
         ZIZMOR_OPTIONS: ${{ inputs.zizmor-options }}
