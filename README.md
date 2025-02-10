@@ -10,7 +10,7 @@ composite actions for use at FPF.
 - [Available Workflows](#available-workflows)
   - [lint-actions](.github/workflows/lint-actions.yaml)
 - [Available Composite Actions](#available-composite-actions)
-  - [example-action](act/example-action/)
+  - [poetry](act/poetry/)
 - [Developer Documentation](#developer-documentation)
 - [License](#license)
 
