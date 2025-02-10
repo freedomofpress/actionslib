@@ -1,0 +1,105 @@
+---
+name: FPF/Poetry
+
+description: Install Python and setup a local Poetry environment
+
+inputs:
+  python-version:
+    description: Version of Python to install
+    default: "3.11"
+    required: false
+
+  poetry-directory:
+    description: Path to the root of the Poetry project
+    default: '.'
+    required: false
+
+  poetry-requirements:
+    description: Path to the requirements.txt to use for installing Poetry
+    required: false
+    default: ''
+
+  root:
+    description: Whether to install the root package dependencies
+    required: false
+    default: 'true'
+
+  groups:
+    description: List of Poetry groups to install
+    required: false
+    default: ''
+
+  extras:
+    description: List of package extras to install
+    required: false
+    default: ''
+
+outputs:
+  poetry-venv-path:
+    description: Path to the Poetry configured virtual environment
+    value: ${{ steps.configure-poetry-path.outputs.poetry-venv-path }}
+
+runs:
+  using: composite
+  steps:
+  - name: Install python ${{ inputs.python-version }}
+    uses: actions/setup-python@v4
+    with:
+      python-version: ${{ inputs.python-version }}
+
+  - name: Configure Job Cache
+    uses: actions/cache@v4
+    with:
+      path: |
+        ~/.cache/pip
+        ~/.cache/pypoetry/cache
+        ~/.poetry
+      key: ${{ runner.os }}-py${{ inputs.python-version }}-${{ hashFiles(format('{0}/poetry.lock', inputs.poetry-directory)) }}  # yamllint disable-line rule:line-length
+
+  - name: Install Poetry
+    shell: bash
+    env:
+      poetry-requirements: ${{ inputs.poetry-requirements || format('{0}/requirements-poetry.txt', github.action_path) }}  # yamllint disable-line rule:line-length
+    run: |
+      mkdir --parents ~/.poetry/runtime
+      python -m venv ~/.poetry/runtime
+      ~/.poetry/runtime/bin/pip install \
+        --requirement='${{ env.poetry-requirements }}' \
+        --disable-pip-version-check \
+        --require-hashes \
+        --no-color
+      echo "~/.poetry/runtime/bin" >> $GITHUB_PATH
+
+  - name: Install root package with Poetry
+    shell: bash
+    if: ${{ inputs.root == 'true' }}
+    run: poetry install --only=main --no-ansi --no-interaction
+
+  - name: Install root package extras with Poetry
+    shell: bash
+    if: ${{ inputs.extras }}
+    env:
+      poetry-extras: ${{ inputs.extras }}
+    run: >-
+      poetry install
+      --only=main
+      --extras='${{ env.poetry-extras }}'
+      --no-ansi
+      --no-interaction
+
+  - name: Install Poetry groups
+    shell: bash
+    if: ${{ inputs.groups }}
+    env:
+      poetry-groups: ${{ inputs.groups }}
+    run: >-
+      poetry install
+      --only='${{ env.poetry-groups }}'
+      --no-ansi
+      --no-interaction
+
+  - name: Export Poetry path
+    shell: bash
+    id: configure-poetry-path
+    run: |
+      echo "poetry-venv-path=$(poetry env info --path)/bin" >> $GITHUB_OUTPUT
