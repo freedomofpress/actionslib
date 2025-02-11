@@ -1,0 +1,15 @@
+name: CI
+
+on:
+  pull_request:
+    types: ["opened", "synchronize"]
+  push:
+    branches: ["main"]
+
+permissions: {}
+
+jobs:
+  lint-actions:
+    uses: ./.github/workflows/lint-actions.yaml
+    secrets:
+      gh-token: ${{ secrets.GITHUB_TOKEN }}

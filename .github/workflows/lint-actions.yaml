@@ -1,0 +1,65 @@
+---
+name: Lint Github Actions
+
+on:
+  workflow_call:
+    inputs:
+      path:
+        description: >-
+         Path to the directory or workflow file to lint. Defaults to the root
+         of the repo which will detect the default Actions workflow location
+         at '.github/workflows/'
+        type: string
+        default: "."
+
+      # Zizmor has no dependencies so there's no need to use a lockfile
+      zizmor-version:
+        description: >-
+         Version spec of Zizmor to install. To pin to a specific version use
+         '==a.b.c', but any vald Pip version specifier can be provided.
+        type: string
+        default: ">=1.2,<2.0"
+
+      zizmor-options:
+        description: Additional CLI options to pass to the Zizmor command.
+        type: string
+        default: "--min-severity=medium"
+
+    secrets:
+      gh-token:
+        description: >-
+         The Github token to use, either provided automatically by the Actions
+         Runner or manually via a repository/organization secret
+        required: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+permissions: {}
+
+jobs:
+  lint-actions:
+    name: Lint:Actions
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Install python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install zizmor
+      run: python -m pip install 'zizmor${{ env.ZIZMOR_VERSION }}'
+      env:
+        ZIZMOR_VERSION: ${{ inputs.zizmor-version }}
+
+    - name: Lint
+      run: zizmor ${{ env.ZIZMOR_PATH }} ${{ env.ZIZMOR_OPTIONS }}
+      env:
+        GH_TOKEN: ${{ secrets.gh-token }} 
+        ZIZMOR_PATH: ${{ inputs.path }}
+        ZIZMOR_OPTIONS: ${{ inputs.zizmor-options }}
