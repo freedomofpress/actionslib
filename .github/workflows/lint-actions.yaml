@@ -1,3 +1,5 @@
+# For setting repository-specific setting, see the Zizmor configuration settings:
+# https://woodruffw.github.io/zizmor/configuration/
 ---
 name: Lint Github Actions
 
@@ -14,11 +16,9 @@ on:
 
       # Zizmor has no dependencies so there's no need to use a lockfile
       zizmor-version:
-        description: >-
-         Version spec of Zizmor to install. To pin to a specific version use
-         '==a.b.c', but any vald Pip version specifier can be provided.
+        description: Version of Zizmor to install
         type: string
-        default: ">=1.2,<2.0"
+        default: "1.3.1"
 
       zizmor-options:
         description: Additional CLI options to pass to the Zizmor command.
@@ -53,7 +53,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Install zizmor
-      run: python -m pip install 'zizmor${{ env.ZIZMOR_VERSION }}'
+      run: python -m pip install 'zizmor==${{ env.ZIZMOR_VERSION }}'
       env:
         ZIZMOR_VERSION: ${{ inputs.zizmor-version }}
 
