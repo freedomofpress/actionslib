@@ -1,8 +1,0 @@
-name: 'Example Action'
-description: 'A No-op'
-runs:
-  using: "composite"
-  steps:
-  - name: Do Nothing
-    run: echo "Hello World"
-    shell: bash
