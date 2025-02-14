@@ -133,9 +133,9 @@ Index of available Reusable Workflows in this repository.
 
 Index of available Composite Actions in the repository.
 
-| Name             | Description                                                     | Docs                          |
-| ---------------- | --------------------------------------------------------------- | ----------------------------- |
-| `example-action` | A nonexistent action to show what documentation will look like. | [:link:](act/example/action/) |
+| Name     | Description                                                     | Docs                  |
+| -------- | --------------------------------------------------------------- | --------------------- |
+| `poetry` | A nonexistent action to show what documentation will look like. | [:link:](act/poetry/) |
 
 ## Developing
 
@@ -175,7 +175,7 @@ Some resources to help with writing new workflows:
 ### Creating new Composite Actions
 
 By convention Composite Actions are located in a namespace directory under `act/`. Any
-additional scripts, files, or resources used by a given action should be underneath it's
+additional scripts, files, or resources used by a given action should be underneath its
 namespace directory there.
 
 Some important notes:
