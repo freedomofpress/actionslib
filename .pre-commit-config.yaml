@@ -1,0 +1,50 @@
+---
+repos:
+- repo: local
+  hooks:
+  - id: end-of-file-fixer
+    name: Enforce end of file format
+    entry: end-of-file-fixer
+    language: system
+    types: [text]
+
+  - id: trailing-whitespace-fixer
+    name: Enforce removal of trailing whitespace
+    entry: trailing-whitespace-fixer
+    language: system
+    types: [text]
+
+  - id: mdformat
+    name: Enforce mdformat formatting for markdown
+    entry: mdformat
+    language: system
+    args:
+    - "--number"
+    - "--wrap=90"
+    types: [markdown]
+
+  - id: check-toml
+    name: Check for valid TOML file syntax
+    entry: check-toml
+    language: system
+    types: [toml]
+
+  - id: check-json
+    name: Check for valid JSON file syntax
+    entry: check-json
+    language: system
+    types: [json]
+
+  - id: check-yaml
+    name: Check for valid YAML file syntax
+    entry: check-yaml
+    args:
+    - "--unsafe"
+    language: system
+    types: [yaml]
+
+  - id: check-merge-conflict
+    name: Check for unresolved merge conflicts
+    entry: check-merge-conflict
+    language: system
+    types: [text]
