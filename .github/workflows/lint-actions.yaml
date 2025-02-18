@@ -1,4 +1,5 @@
-# For setting repository-specific setting, see the Zizmor configuration settings:
+# For setting repository-specific setting, see the Zizmor
+# configuration settings:
 # https://woodruffw.github.io/zizmor/configuration/
 ---
 name: Lint Github Actions
