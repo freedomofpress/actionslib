@@ -11,6 +11,38 @@ permissions: {}
 
 jobs:
   lint-actions:
+    name: Lint:${{ matrix.target.title }}
+    strategy:
+      matrix:
+        target:
+        - title: Reusable Workflows
+          directory: "."
+        - title: Composite Actions
+          directory: "./act/"
     uses: ./.github/workflows/lint-actions.yaml
+    with:
+      path: ${{ matrix.target.directory }}
     secrets:
       gh-token: ${{ secrets.GITHUB_TOKEN }}
+
+  lint-other:
+    name: Lint:${{ matrix.target.title }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+        - title: Pre-Commit
+          command: pre-commit run --all-files
+        - title: YAML
+          command: yamllint .  # note the trailing '.'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Setup Poetry
+      uses: ./act/poetry
+
+    - name: Lint
+      run: poetry run ${{ matrix.target.command }}
