@@ -12,6 +12,9 @@ permissions: {}
 jobs:
   lint-actions:
     name: Lint:${{ matrix.target.title }}
+    permissions:
+      contents: read
+      actions: read
     strategy:
       matrix:
         target:
@@ -22,8 +25,6 @@ jobs:
     uses: ./.github/workflows/lint-actions.yaml
     with:
       path: ${{ matrix.target.directory }}
-    secrets:
-      gh-token: ${{ secrets.GITHUB_TOKEN }}
 
   lint-other:
     name: Lint:${{ matrix.target.title }}
