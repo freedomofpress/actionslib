@@ -41,7 +41,7 @@ jobs:
           RCLONE_S3_PROVIDER: "Cloudflare"
           RCLONE_S3_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           RCLONE_S3_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          RCLONE_S3_ENDPOINT: "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"  # yamllint disable-line rule:line-length
+          RCLONE_S3_ENDPOINT: "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
           BUCKET: ${{ secrets.R2_BUCKET }}
           PATH_TO_SYNC: ${{ inputs.path }}
         run: |
