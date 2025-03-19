@@ -6,3 +6,5 @@ rules:
     check-keys: false
   indentation:
     indent-sequences: consistent
+  line-length:
+    max: 100
