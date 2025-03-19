@@ -45,4 +45,4 @@ jobs:
           BUCKET: ${{ secrets.R2_BUCKET }}
           PATH_TO_SYNC: ${{ inputs.path }}
         run: |
-          rclone -v sync $PATH_TO_SYNC :s3,env_auth:$BUCKET/
+          rclone -v sync --checksum --no-update-modtime $PATH_TO_SYNC :s3,env_auth:$BUCKET/
