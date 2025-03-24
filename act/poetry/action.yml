@@ -9,6 +9,13 @@ inputs:
     default: "3.11"
     required: false
 
+  manage-python:
+    description: >-
+      Whether to install and configure Python. Only set to false if an existing Python
+      installation is known to exist in the runtime environment.
+    default: 'true'
+    required: false
+
   poetry-directory:
     description: Path to the root of the Poetry project
     default: '.'
@@ -43,6 +50,7 @@ runs:
   using: composite
   steps:
   - name: Install python ${{ inputs.python-version }}
+    if: ${{ inputs.manage-python == 'true' }}
     uses: actions/setup-python@v4
     with:
       python-version: ${{ inputs.python-version }}
