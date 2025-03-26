@@ -44,5 +44,10 @@ jobs:
           RCLONE_S3_ENDPOINT: "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
           BUCKET: ${{ secrets.R2_BUCKET }}
           PATH_TO_SYNC: ${{ inputs.path }}
-        run: |
-          rclone -v sync --checksum --no-update-modtime $PATH_TO_SYNC :s3,env_auth:$BUCKET/
+        run: >-
+          rclone sync -v
+            --checksum
+            --no-update-modtime
+            --config="/dev/null"
+            $PATH_TO_SYNC
+            :s3,env_auth:$BUCKET/
