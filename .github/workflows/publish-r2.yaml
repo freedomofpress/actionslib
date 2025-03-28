@@ -46,8 +46,8 @@ jobs:
           PATH_TO_SYNC: ${{ inputs.path }}
         run: >-
           rclone sync -v
-            --checksum
-            --no-update-modtime
-            --config="/dev/null"
-            $PATH_TO_SYNC
-            :s3,env_auth:$BUCKET/
+          --checksum
+          --no-update-modtime
+          --config="/dev/null"
+          $PATH_TO_SYNC
+          :s3,env_auth:$BUCKET/
