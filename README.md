@@ -12,6 +12,7 @@ composite actions for use at FPF.
   - [publish-r2](.github/workflows/publish-r2.yaml)
 - [Available Composite Actions](#available-composite-actions)
   - [poetry](act/poetry/)
+  - [delete-artifact](act/delete-artifact/)
 - [Developer Documentation](#developer-documentation)
 - [License](#license)
 
@@ -135,9 +136,10 @@ Index of available Reusable Workflows in this repository.
 
 Index of available Composite Actions in the repository.
 
-| Name     | Description                                                     | Docs                  |
-| -------- | --------------------------------------------------------------- | --------------------- |
-| `poetry` | A nonexistent action to show what documentation will look like. | [:link:](act/poetry/) |
+| Name              | Description                                                                                                                                                                                  | Docs                           |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `poetry`          | Sets up a local Python environment using [Poetry](https://python-poetry.org/)                                                                                                                | [:link:](act/poetry/)          |
+| `delete-artifact` | Deletes a [Github Action Artifact](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow) given the artifact's name | [:link:](act/delete-artifact/) |
 
 ## Developing
 

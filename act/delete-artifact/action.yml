@@ -1,0 +1,51 @@
+---
+name: FPF/Delete-Artifact
+
+description: Delete a Github Actions workflow artifact by name
+
+inputs:
+  artifact:
+    description: Name of the artifact to delete
+    required: true
+
+  github-token:
+    description: >-
+      Github token used for interacting with Actions API. Must have Actions:Write permissions
+    required: true
+
+  repository:
+    description: >-
+      Repository that the target artifact is associated with, in `owner/name` format
+    default: ${{ github.repository }}
+    required: false
+
+  error-if-absent:
+    description: Whether to error if the specified artifact already does not exist
+    default: 'true'
+    required: false
+
+outputs:
+  artifact-id:
+    description: ID number of the artifact that was deleted
+    value: ${{ steps.fetch-artifact-id.outputs.artifact-id }}
+
+runs:
+  using: composite
+  steps:
+  - name: Fetch artifact info
+    id: fetch-artifact-id
+    shell: bash
+    env:
+      REPOSITORY: ${{ inputs.repository }}
+      ARTIFACT: ${{ inputs.artifact }}
+      GITHUB_TOKEN: ${{ inputs.github-token }}
+    run: bash ${{ github.action_path }}/fetch-artifact.sh
+
+  - name: Delete artifact
+    id: delete-artifact
+    shell: bash
+    env:
+      REPOSITORY: ${{ inputs.repository }}
+      GITHUB_TOKEN: ${{ inputs.github-token }}
+      ARTIFACT_ID: ${{ steps.fetch-artifact-id.outputs.artifact-id }}
+    run: bash ${{ github.action_path }}/delete-artifact.sh
