@@ -13,6 +13,7 @@ composite actions for use at FPF.
 - [Available Composite Actions](#available-composite-actions)
   - [poetry](act/poetry/)
   - [delete-artifact](act/delete-artifact/)
+  - [signed-commit](act/signed-commit/)
 - [Developer Documentation](#developer-documentation)
 - [License](#license)
 
@@ -140,6 +141,7 @@ Index of available Composite Actions in the repository.
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
 | `poetry`          | Sets up a local Python environment using [Poetry](https://python-poetry.org/)                                                                                                                | [:link:](act/poetry/)          |
 | `delete-artifact` | Deletes a [Github Action Artifact](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow) given the artifact's name | [:link:](act/delete-artifact/) |
+| `signed-commit`   | Creates a GPG signed commit using the Github API                                                                                                                                             | [:link:](act/signed-commit/)   |
 
 ## Developing
 
