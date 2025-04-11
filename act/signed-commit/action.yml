@@ -1,0 +1,58 @@
+---
+# Adapted from here: https://gist.github.com/swinton/03e84635b45c78353b1f71e41007fc7c
+
+name: FPF/Signed-Commit
+
+description: Update a file with new content with a signed commit
+
+inputs:
+  file:
+    description: Path to the file to update
+    required: true
+
+  branch:
+    description: Branch that the commit should be added to
+    required: true
+
+  message:
+    description: Commit message
+    required: false
+    default: "Automatic commit"
+
+  repo:
+    description: Repository to commit to in owner/name format; defaults to current repo
+    required: false
+    default: ""
+
+  repo-path:
+    description: Path to the local clone of the repository
+    required: false
+    default: "."
+
+  github-token:
+    description: >-
+      Github token used for interacting with Actions API. Must have Contents:Write permissions
+    required: true
+
+runs:
+  using: composite
+  steps:
+  - name: Commit changes
+    shell: bash
+    working-directory: ${{ inputs.repo-path }}
+    env:
+      GH_TOKEN: ${{ inputs.github-token }}
+      BRANCH: ${{ inputs.branch }}
+      FILE: ${{ inputs.file }}
+      REPO: ${{ inputs.repo || github.repository }}
+      MESSAGE: ${{ inputs.message }}
+    run: |
+      export SHA=$(git rev-parse "$BRANCH:$FILE")
+      export CONTENT=$(base64 -i "$FILE")
+
+      gh api --method PUT "/repos/$REPO/contents/$FILE" \
+          --field message="$MESSAGE" \
+          --field content="$CONTENT" \
+          --field encoding="base64" \
+          --field branch="$BRANCH" \
+          --field sha="$SHA"
