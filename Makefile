@@ -17,3 +17,11 @@ lint: dev  ## Run local linters
 	@poetry run pre-commit run --all-files
 	@poetry run zizmor . --no-online-audits --min-severity=medium
 	@poetry run yamllint .github/workflows/
+	@# This command uses `find` to identify all files *not* in '.venv/' and '.git/', pipes the
+	@# output to `awk` to determine if they are shell scripts, and then pipes that filtered
+	@# output into shellcheck. See the below resources for rationale and reference
+	@# implementations:
+	@#
+	@# https://stackoverflow.com/a/16595367
+	@# https://www.shellcheck.net/wiki/Recursiveness
+	@find . -not \( -path ./.git -prune \) -not \( -path ./.venv -prune \) -type f -exec file {} + | awk -F: '/shell script/{print $$1}' | xargs -r shellcheck
