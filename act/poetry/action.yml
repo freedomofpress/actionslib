@@ -14,10 +14,13 @@ inputs:
     default: '.'
     required: false
 
-  poetry-requirements:
-    description: Path to the requirements.txt to use for installing Poetry
+  poetry-version:
+    description: |
+      Version of Poetry to install. Available versions are:
+
+      - 1.8
+    default: '1.8'
     required: false
-    default: ''
 
   root:
     description: Whether to install the root package dependencies
@@ -59,7 +62,7 @@ runs:
   - name: Install Poetry
     shell: bash
     env:
-      poetry-requirements: ${{ inputs.poetry-requirements || format('{0}/requirements-poetry.txt', github.action_path) }}  # yamllint disable-line rule:line-length
+      poetry-requirements: ${{ github.action_path }}/poetry-${{ inputs.poetry-version }}/requirements.txt
     run: |
       mkdir --parents ~/.poetry/runtime
       python -m venv ~/.poetry/runtime
@@ -73,11 +76,13 @@ runs:
   - name: Install root package with Poetry
     shell: bash
     if: ${{ inputs.root == 'true' }}
+    working-directory: ${{ inputs.poetry-directory }}
     run: poetry install --only=main --no-ansi --no-interaction
 
   - name: Install root package extras with Poetry
     shell: bash
     if: ${{ inputs.extras }}
+    working-directory: ${{ inputs.poetry-directory }}
     env:
       poetry-extras: ${{ inputs.extras }}
     run: >-
@@ -90,6 +95,7 @@ runs:
   - name: Install Poetry groups
     shell: bash
     if: ${{ inputs.groups }}
+    working-directory: ${{ inputs.poetry-directory }}
     env:
       poetry-groups: ${{ inputs.groups }}
     run: >-

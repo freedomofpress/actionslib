@@ -13,15 +13,17 @@
 
 set -e
 
-function main() {
-    local poetry_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-    local requirements="${poetry_dir}/requirements-poetry.txt"
-    local poetry_version=$(poetry --version)
+function updatePoetry() {
+    local target="${1}"
+    local requirements="${1}/requirements.txt"
     local now=$(command date --iso-8601=minutes)
 
-    echo "Updating Python dependencies using ${poetry_version}"
+    local poetry_version_active=$(poetry --version --no-ansi)
+    local poetry_version_installs="Poetry (version $(poetry show poetry --directory=$target | grep 'version' | cut -d ':' -f 2 | xargs))"
+
+    echo "Updating Python dependencies for ${poetry_version_installs} using ${poetry_version_active}"
     poetry lock \
-        --directory="${poetry_dir}" \
+        --directory="${target}" \
         --no-interaction \
         --no-ansi
 
@@ -29,6 +31,7 @@ function main() {
     local requirements_tmp=$(mktemp --quiet)
 
     poetry export \
+        --directory="${target}" \
         --format=requirements.txt \
         --output="${requirements_tmp}" \
         --no-interaction \
@@ -42,17 +45,28 @@ function main() {
 #
 # See https://github.com/freedomofpress/actionslib/ for more information
 #
-# Generated using ${poetry_version}
+# Generated with ${poetry_version_active}
 # Generated at ${now}
-
+#
+# This requirements file installs ${poetry_version_installs}
+#
 EOF
 
     cat "${requirements_tmp}" >> "${requirements}"
 
     rm --force "${requirements_tmp}"
-    rm --recursive --force $(poetry env info --path)
 
     echo "Done"
+}
+
+function main() {
+    local poetry_targets=$(ls --directory --color=never poetry-*)
+    local local_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+    for target in ${poetry_targets}; do
+        echo "Updating ${target}..."
+        updatePoetry "${local_dir}/${target}"
+    done
 }
 
 main "$@"
