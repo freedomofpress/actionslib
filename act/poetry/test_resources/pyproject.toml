@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "test-resources"
+version = "0.1.0"
+description = "Resources for testing the action"
+authors = ["Ethan Paul <ethan@freedom.press>"]
+include = ["test_resources.py"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+toml = {version = "^0.10.2", optional = true}
+
+[tool.poetry.extras]
+testing = ["toml"]
+
+[tool.poetry.group.testing.dependencies]
+requests = "^2.32.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
