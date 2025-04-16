@@ -1,5 +1,5 @@
 ---
-name: Test:act/poetry
+name: Test:FPF/Poetry
 
 on:
   workflow_call:
@@ -43,7 +43,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         poetry-directory: ./act/poetry/test_resources
         root: ${{ matrix.combos.root }}
-        groups: ${{ matrix.combos.groups }}
+        poetry-groups: ${{ matrix.combos.groups }}
         extras: ${{ matrix.combos.extras }}
 
     - name: Fetch environment information
@@ -75,12 +75,10 @@ jobs:
       env:
         deps: ${{ steps.envinfo.outputs.deps }}
       run: |
-        echo $deps
-
-        if echo $deps | grep ${{ matrix.combos.root == 'true' && ' ' || '-v'}} ^test-resources\\s; then
-          echo "PASS: root module (test-resources) is${{ matrix.combos.root == 'true' && ' ' || ' not'}} installed"
+        if echo $deps | grep ${{ matrix.combos.root == 'true' && ' ' || '-v'}} test-resources; then
+          echo "PASS: root module (test-resources) is${{ matrix.combos.root == 'true' && ' ' || ' not '}}installed"
         else
-          echo "FAIL: root module (test-resources) is${{ matrix.combos.root != 'true' && ' ' || ' not'}} installed"
+          echo "FAIL: root module (test-resources) is${{ matrix.combos.root != 'true' && ' ' || ' not '}}installed"
           exit 1
         fi
 
@@ -89,12 +87,10 @@ jobs:
       env:
         deps: ${{ steps.envinfo.outputs.deps }}
       run: |
-        echo $deps
-
-        if echo $deps | grep ${{ matrix.combos.extras != '' || '-v'}} ^toml\\s; then
-          echo "PASS: extra dependency (toml) is${{ matrix.combos.extras != '' || ' not' }} installed"
+        if echo $deps | grep ${{ matrix.combos.extras != '' && ' ' || '-v'}} toml; then
+          echo "PASS: extra dependency (toml) is${{ matrix.combos.extras != '' && ' ' || ' not ' }}installed"
         else
-          echo "FAIL: extra dependency (toml) is${{ matrix.combos.extras == '' || ' not' }} installed"
+          echo "FAIL: extra dependency (toml) is${{ matrix.combos.extras == '' && ' ' || ' not ' }}installed"
           exit 1
         fi
 
@@ -103,11 +99,9 @@ jobs:
       env:
         deps: ${{ steps.envinfo.outputs.deps }}
       run: |
-        echo $deps
-
-        if echo $deps | grep ${{ matrix.combos.groups != '' || '-v'}} ^requests\\s; then
-          echo "PASS: group dependency (requests) is${{ matrix.combos.groups != '' || ' not' }} installed"
+        if echo $deps | grep ${{ matrix.combos.groups != '' && ' ' || '-v'}} requests; then
+          echo "PASS: group dependency (requests) is${{ matrix.combos.groups != '' && ' ' || ' not ' }}installed"
         else
-          echo "FAIL: group dependency (requests) is${{ matrix.combos.groups == '' || ' not' }} installed"
+          echo "FAIL: group dependency (requests) is${{ matrix.combos.groups == '' && ' ' || ' not ' }}installed"
           exit 1
         fi

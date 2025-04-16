@@ -77,11 +77,13 @@ runs:
   - name: Install root package with Poetry
     shell: bash
     if: ${{ inputs.root == 'true' }}
+    working-directory: ${{ inputs.poetry-directory }}
     run: poetry install --only=main --no-ansi --no-interaction
 
   - name: Install root package extras with Poetry
     shell: bash
     if: ${{ inputs.extras }}
+    working-directory: ${{ inputs.poetry-directory }}
     env:
       poetry-extras: ${{ inputs.extras }}
     run: >-
@@ -94,6 +96,7 @@ runs:
   - name: Install Poetry groups
     shell: bash
     if: ${{ inputs.groups }}
+    working-directory: ${{ inputs.poetry-directory }}
     env:
       poetry-groups: ${{ inputs.groups }}
     run: >-
@@ -105,5 +108,6 @@ runs:
   - name: Export Poetry path
     shell: bash
     id: configure-poetry-path
+    working-directory: ${{ inputs.poetry-directory }}
     run: |
       echo "poetry-venv-path=$(poetry env info --path)/bin" >> $GITHUB_OUTPUT
