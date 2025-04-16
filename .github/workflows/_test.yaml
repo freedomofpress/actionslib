@@ -1,0 +1,17 @@
+---
+name: Test
+
+on:
+  pull_request:
+    types: ["opened", "synchronize"]
+  push:
+    branches: ["main"]
+
+permissions: {}
+
+jobs:
+  test-act-poetry:
+    name: Test:act/poetry
+    permissions:
+      contents: read
+    uses: ./.github/workflows/_test_act_poetry.yaml
