@@ -48,4 +48,4 @@ if [ "$count" -eq 0 ] && [ "$ERROR_IF_ABSENT" = 'true' ]; then
     exit 1
 fi
 
-echo artifact-id=$(echo "$artifactData" | jq '.artifacts[0].id') >>"$GITHUB_OUTPUT"
+echo artifact-id="$(echo "$artifactData" | jq '.artifacts[0].id')" >>"$GITHUB_OUTPUT"
