@@ -91,7 +91,7 @@ jobs:
       run: |
         echo $deps
 
-        if echo $deps | grep ${{ matrix.combos.extras != '' || '-v'}} ^toml; then
+        if echo $deps | grep ${{ matrix.combos.extras != '' || '-v'}} toml\\s; then
           echo "PASS: extra dependency (toml) is${{ matrix.combos.extras != '' || ' not' }} installed"
         else
           echo "FAIL: extra dependency (toml) is${{ matrix.combos.extras == '' || ' not' }} installed"
@@ -105,7 +105,7 @@ jobs:
       run: |
         echo $deps
 
-        if echo $deps | grep ${{ matrix.combos.groups != '' || '-v'}} requests\\s; then
+        if echo $deps | grep ${{ matrix.combos.groups != '' || '-v'}} \\srequests\\s; then
           echo "PASS: group dependency (requests) is${{ matrix.combos.groups != '' || ' not' }} installed"
         else
           echo "FAIL: group dependency (requests) is${{ matrix.combos.groups == '' || ' not' }} installed"
