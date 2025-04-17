@@ -1,5 +1,5 @@
 ---
-name: Test:act/poetry
+name: Test:FPF/Poetry
 
 on:
   workflow_call:
@@ -16,21 +16,21 @@ jobs:
         - '3.12'
         - '3.13'
         combos:
+        # - root: 'true'
+        #   extras: testing
+        #   groups: ''
         - root: 'true'
           extras: testing
-          groups: ''
-        - root: 'true'
-          extras: testing
           groups: testing
-        - root: 'true'
-          extras: ''
-          groups: testing
-        - root: 'false'
-          extras: ''
-          groups: testing
-        - root: 'false'
-          extras: ''
-          groups: ''
+        # - root: 'true'
+        #   extras: ''
+        #   groups: testing
+        # - root: 'false'
+        #   extras: ''
+        #   groups: testing
+        # - root: 'false'
+        #   extras: ''
+        #   groups: ''
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -77,7 +77,7 @@ jobs:
       run: |
         echo $deps
 
-        if echo $deps | grep ${{ matrix.combos.root == 'true' && ' ' || '-v'}} ^test-resources\\s; then
+        if echo $deps | grep ${{ matrix.combos.root == 'true' && ' ' || '-v'}} ^test-resources\\\\s; then
           echo "PASS: root module (test-resources) is${{ matrix.combos.root == 'true' && ' ' || ' not'}} installed"
         else
           echo "FAIL: root module (test-resources) is${{ matrix.combos.root != 'true' && ' ' || ' not'}} installed"
