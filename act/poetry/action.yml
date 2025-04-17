@@ -74,34 +74,19 @@ runs:
       echo "~/.local/share/poetry-runtime/bin" >> $GITHUB_PATH
       ~/.local/share/poetry-runtime/bin/python --version
 
-  - name: Install root package with Poetry
-    shell: bash
-    if: ${{ inputs.root == 'true' }}
-    working-directory: ${{ inputs.poetry-directory }}
-    run: poetry install --only=main --no-ansi --no-interaction
-
-  - name: Install root package extras with Poetry
-    shell: bash
-    if: ${{ inputs.extras }}
-    working-directory: ${{ inputs.poetry-directory }}
-    env:
-      poetry-extras: ${{ inputs.extras }}
-    run: >-
-      poetry install
-      --only=main
-      --extras='${{ env.poetry-extras }}'
-      --no-ansi
-      --no-interaction
-
   - name: Install Poetry groups
     shell: bash
-    if: ${{ inputs.groups }}
+    if: ${{ inputs.root == 'true' || inputs.groups || inputs.extras }}
     working-directory: ${{ inputs.poetry-directory }}
     env:
-      poetry-groups: ${{ inputs.groups }}
+      POETRY_EXTRAS: ${{ inputs.extras }}
+      POETRY_GROUPS: ${{ inputs.groups }}
     run: >-
       poetry install
-      --only='${{ env.poetry-groups }}'
+      ${{ inputs.root != 'true' && '--no-root' || ' ' }}
+      ${{ inputs.root == 'true' && '--only=main' || ' ' }}
+      ${{ inputs.extras == '' && ' ' || '--extras="$POETRY_EXTRAS"' }}
+      ${{ inputs.groups == '' && ' ' || '--only="$POETRY_GROUPS"' }}
       --no-ansi
       --no-interaction
 
