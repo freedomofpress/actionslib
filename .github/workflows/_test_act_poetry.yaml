@@ -43,7 +43,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         poetry-directory: ./act/poetry/test_resources
         root: ${{ matrix.combos.root }}
-        poetry-groups: ${{ matrix.combos.groups }}
+        groups: ${{ matrix.combos.groups }}
         extras: ${{ matrix.combos.extras }}
 
     - name: Fetch environment information
