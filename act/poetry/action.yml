@@ -61,14 +61,18 @@ runs:
     env:
       poetry-requirements: ${{ inputs.poetry-requirements || format('{0}/requirements-poetry.txt', github.action_path) }}  # yamllint disable-line rule:line-length
     run: |
-      mkdir --parents ~/.poetry/runtime
-      python -m venv ~/.poetry/runtime
-      ~/.poetry/runtime/bin/pip install \
+      mkdir --parents ~/.local/share/poetry-runtime
+      which python
+      python --version
+      python -m venv ~/.local/share/poetry-runtime
+      ~/.local/share/poetry-runtime/bin/pip install \
         --requirement='${{ env.poetry-requirements }}' \
         --disable-pip-version-check \
         --require-hashes \
         --no-color
-      echo "~/.poetry/runtime/bin" >> $GITHUB_PATH
+      echo "Successfully installed $(~/.local/share/poetry-runtime/bin/poetry --version --no-color)"
+      echo "~/.local/share/poetry-runtime/bin" >> $GITHUB_PATH
+      ~/.local/share/poetry-runtime/bin/python --version
 
   - name: Install root package with Poetry
     shell: bash
