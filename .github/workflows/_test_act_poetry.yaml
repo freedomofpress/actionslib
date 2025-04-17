@@ -77,7 +77,7 @@ jobs:
       run: |
         echo $deps
 
-        if echo $deps | grep ${{ matrix.combos.root == 'true' && ' ' || '-v'}} ^test-resources\\\\s; then
+        if echo $deps | grep ${{ matrix.combos.root == 'true' && ' ' || '-v'}} test-resources; then
           echo "PASS: root module (test-resources) is${{ matrix.combos.root == 'true' && ' ' || ' not'}} installed"
         else
           echo "FAIL: root module (test-resources) is${{ matrix.combos.root != 'true' && ' ' || ' not'}} installed"
@@ -91,7 +91,7 @@ jobs:
       run: |
         echo $deps
 
-        if echo $deps | grep ${{ matrix.combos.extras != '' || '-v'}} ^toml\\s; then
+        if echo $deps | grep ${{ matrix.combos.extras != '' || '-v'}} ^toml; then
           echo "PASS: extra dependency (toml) is${{ matrix.combos.extras != '' || ' not' }} installed"
         else
           echo "FAIL: extra dependency (toml) is${{ matrix.combos.extras == '' || ' not' }} installed"
@@ -105,7 +105,7 @@ jobs:
       run: |
         echo $deps
 
-        if echo $deps | grep ${{ matrix.combos.groups != '' || '-v'}} ^requests\\s; then
+        if echo $deps | grep ${{ matrix.combos.groups != '' || '-v'}} requests\\s; then
           echo "PASS: group dependency (requests) is${{ matrix.combos.groups != '' || ' not' }} installed"
         else
           echo "FAIL: group dependency (requests) is${{ matrix.combos.groups == '' || ' not' }} installed"
