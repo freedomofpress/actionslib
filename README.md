@@ -149,6 +149,7 @@ System requirements:
 
 - Python >=3.11
 - [Poetry >=1.8, \<2.0](https://python-poetry.org/docs/#installation)
+- [ShellCheck >=0.10](https://github.com/koalaman/shellcheck)
 
 Helpful tools:
 

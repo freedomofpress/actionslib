@@ -14,10 +14,13 @@
 set -e
 
 function main() {
-    local poetry_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    local poetry_dir
+    poetry_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     local requirements="${poetry_dir}/requirements-poetry.txt"
-    local poetry_version=$(poetry --version)
-    local now=$(command date --iso-8601=minutes)
+    local poetry_version
+    poetry_version=$(poetry --version)
+    local now
+    now=$(command date --iso-8601=minutes)
 
     echo "Updating Python dependencies using ${poetry_version}"
     poetry lock \
@@ -26,7 +29,8 @@ function main() {
         --no-ansi
 
     echo "Exporting requirements from Poetry to Pip-compatible format"
-    local requirements_tmp=$(mktemp --quiet)
+    local requirements_tmp
+    requirements_tmp=$(mktemp --quiet)
 
     poetry export \
         --format=requirements.txt \
@@ -50,7 +54,7 @@ EOF
     cat "${requirements_tmp}" >> "${requirements}"
 
     rm --force "${requirements_tmp}"
-    rm --recursive --force $(poetry env info --path)
+    rm --recursive --force "$(poetry env info --path)"
 
     echo "Done"
 }
