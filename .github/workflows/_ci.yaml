@@ -36,6 +36,15 @@ jobs:
           command: pre-commit run --all-files
         - title: YAML
           command: yamllint .  # note the trailing '.'
+          # This command uses `find` to identify all files *not* in '.venv/' and '.git/', pipes the
+          # output to `awk` to determine if they are shell scripts, and then pipes that filtered
+          # output into shellcheck. See the below resources for rationale and reference
+          # implementations:
+          #
+          # https://stackoverflow.com/a/16595367
+          # https://www.shellcheck.net/wiki/Recursiveness
+        - title: Shell
+          command: "find . -not \\( -path ./.git -prune \\) -not \\( -path ./.venv -prune \\) -type f -exec file {} + | awk -F: '/shell script/{print $1}' | xargs -r shellcheck"  # yamllint disable-line rule:line-length
     steps:
     - name: Checkout
       uses: actions/checkout@v4
