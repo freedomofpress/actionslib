@@ -1,0 +1,138 @@
+---
+name: Build OCI Image
+
+on:
+  workflow_call:
+    inputs:
+      context:
+        description: >-
+          Path to the build context for the image
+        type: string
+        default: "."
+
+      containerfile:
+        description: >-
+          Path to the container image specification file (i.e. Containerfile, Dockerfile) to use
+          for the image build. A full path can be specified, but if only a filename is specified
+          then that filename will be looked for at the path specified by ``context``.
+        type: string
+        default: "Containerfile"
+
+      build-args:
+        description: >-
+          Build arguments to pass into the build operation. Arguments are provided in
+          ``key=value`` format, with different arguments separated by semicolons (``;``).
+        type: string
+        default: ""
+
+      registry:
+        description: >-
+          The registry URL where the built image should be pushed in
+          ``<host>/<owner>/<namespace>`` format. If not provided, then the image will not be
+          pushed to any registry.
+        type: string
+        default: "localhost/${{ github.repository }}"
+
+      tags:
+        description: >-
+          Additional tags to apply to the image once built. Multiple tags can be specified as
+          separated by semicolons (``;``). All images will be assigned a tag corresponding to the
+          git commit SHA that triggered the build.
+        type: string
+        default: ""
+
+      create-artifact:
+        description: >-
+          Whether to publish the built image as a temporary Github Actions artifact. If true, then
+          the ``artifact-name`` output will be populated with the name of an ephemeral artifact
+          name that can be accessed within the same workflow run.
+
+          This can be used as an easier way to re-use images in the same workflow run without
+          needing to authenticate to the container registry. When the artifact is downloaded and
+          unpacked, there will be a single file in the output location named ``container.tar``
+          which can be used with ``podman image load`` to load the image into a container engine.
+        type: boolean
+        default: false
+
+    secrets:
+      registry-auth-token:
+        description: >-
+          The Github token used for authenticating to the image registry.
+        required: false
+
+    outputs:
+      image-digest:
+        description: >-
+          The checksum digest of the built image in the format: ``<alg>:<digest>``
+        value: ""
+
+      registry-url:
+        description: >-
+          The canonical URL of the published image on the registry in the format:
+          ``<host>/<owner>/<namespace>@<alg>:<digest>``. This output will not be
+          populated if the ``registry`` input is not provided.
+        value: ""
+
+      artifact-name:
+        description: >-
+          Name of the Github Actions artifact containing the image archive. This name can
+          be used to download the artifact in later jobs if necessary. This output will not
+          be populated if the ``create-artifact`` input is ``false``.
+        value: ""
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Determine build parameters
+      id: parameters
+      env:
+        ARGS: ${{ inputs.build-args || 'nothing' }}
+        TARGET: ${{ contains(inputs.containerfile, '/') && inputs.containerfile || format('{0}/{1}', inputs.context, inputs.containerfile) }}
+        REGISTRY: ${{ inputs.registry }}
+        TAGS: ${{ format('{0};{1}', github.sha, inputs.tags) }}
+      run: |
+        echo "containerfile=$TARGET" >>$GITHUB_OUTPUT
+
+        if [ "$ARGS" = "nothing" ]; then
+          echo 'args=[]' >>$GITHUB_OUTPUT
+        else
+          echo "args=$(echo $ARGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
+        fi
+
+        export FORMATTED=""
+        for tag in $(echo "$TAGS" | tr ';' '\n'); do
+          export FORMATTED="$REGISTRY:$tag"
+        done
+        echo "tags=$(echo $FORMATTED | jq -R | jq -scM)" >>$GITHUB_OUTPUT
+
+        echo "currenttime=$(date --iso-8601=seconds)" >>$GITHUB_OUTPUT
+
+    - name: Login to registry
+      uses: redhat-actions/podman-login@v1
+      if: ${{ ! startsWith(inputs.registry, 'localhost') }}
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.registry-auth-token }}
+
+    - name: Build
+      uses: redhat-actions/buildah-build@v2
+      with:
+        context: ${{ inputs.context }}
+        containerfiles: |
+          ${{ steps.parameters.outputs.containerfile }}
+        layers: true
+        tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
+        build-args: |
+          ${{ join(fromJson(steps.parameters.outputs.args), '\n') }}
+        labels: |
+          press.freedom.metadata.source.repository=${{ github.server_url }}/${{ github.repository }}
+          press.freedom.metadata.source.commit=${{ github.sha }}
+          press.freedom.metadata.source.ref=${{ github.ref_name }}
+          press.freedom.metadata.build.orchestrator=github_actions
+          press.freedom.metadata.build.timestamp=${{ steps.parameters.outputs.currenttime }}
+          press.freedom.metadata.build.job=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_number }}
+          press.freedom.metadata.build.initiator=${{ github.triggering_actor }}
+          press.freedom.metadata.build.workflow=${{ github.server_url }}/${{ github.workflow_ref }}
+          press.freedom.metadata.build.workflow-sha=${{ github.workflow_sha }}
