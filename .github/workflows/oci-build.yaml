@@ -1,0 +1,260 @@
+---
+name: Build OCI Image
+
+on:
+  workflow_call:
+    inputs:
+      context:
+        description: >-
+          Path to the build context for the image
+        type: string
+        default: "."
+
+      containerfile:
+        description: >-
+          Path to the container image specification file (i.e. Containerfile, Dockerfile) to use
+          for the image build. A full path can be specified, but if only a filename is specified
+          then that filename will be looked for at the path specified by ``context``.
+        type: string
+        default: "Containerfile"
+
+      build-args:
+        description: >-
+          Build arguments to pass into the build operation. Arguments are provided in
+          ``key=value`` format, with different arguments separated by semicolons (``;``).
+        type: string
+        default: ""
+
+      requires-submodules:
+        description: >-
+          Indicates the build requires git submodules to be checked out. If true, submodules will
+          be checked out recursively.
+        type: boolean
+        default: false
+
+      requires-deep-history:
+        description: >-
+          Indicates the build requires the full git history be present in the working directory (as
+          opposed to a shallow checkout) for inspection. If true, the checkout depth will be set to
+          0 to indicate the full history should be fetched.
+        type: boolean
+        default: false
+
+      requires-lfs:
+        description: >-
+          Indicates the build requires files from git LFS. If true, the checkout will also download
+          any LFS files associated with the current reference.
+        type: boolean
+        default: false
+
+      registry:
+        description: >-
+          The registry URL where the built image should be pushed in
+          ``<host>/<namespace>/<repository>`` format. If not provided, then the image will not be
+          pushed to any registry.
+        type: string
+        default: "localhost/${{ github.repository }}"
+
+      tags:
+        description: >-
+          Additional tags to apply to the image once built. Multiple tags can be specified as
+          separated by semicolons (``;``). All images will be assigned a tag corresponding to the
+          git commit SHA that triggered the build.
+        type: string
+        default: ""
+
+    secrets:
+      registry-username:
+        description: >-
+          The username for authenticating to the remote image registry. Uses `github.actor`
+          by default. If `inputs.registry` is not specified or specifies a localhost registry
+          then this value is not used.
+        required: false
+      registry-password:
+        description: >-
+          The passwrd for authenticating to the remote image registry. Uses `GITHUB_TOKEN`
+          by default. If `inputs.registry` is not specified or specifies a localhost registry
+          then this value is not used.
+        required: false
+
+    outputs:
+      image-digest:
+        description: >-
+          The checksum digest of the built image in the format: ``<alg>:<digest>``
+        value: ${{ jobs.build.outputs.digest }}
+
+      image-url:
+        description: >-
+          The canonical URL of the published image on the registry in the format:
+          ``<host>/<namespace>/<repository>:<sha>``. This value is not externally referenceable
+          if the registry was specified to be on ``localhost``.
+        value: ${{ jobs.build.outputs.url }}
+
+      artifact-name:
+        description: >-
+          Name of the Github Actions artifact containing the image archive. This name can
+          be used to download the artifact in later jobs if necessary.
+        value: ${{ jobs.build.outputs.artifact-name }}
+
+      artifact-id:
+        description: >-
+          ID of the Github Actions artifact containing the image archive. This ID can
+          be used to download the artifact in later jobs if necessary.
+        value: ${{ jobs.build.outputs.artifact-id }}
+
+      artifact-checksum:
+        description: >-
+          SHA256 checksum of the Github Actions artifact containing the image archive. This
+          checksum can be used to validate the artifact in later jobs if necessary.
+        value: ${{ jobs.build.outputs.artifact-checksum }}
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set build parameters
+      id: parameters
+      env:
+        # This is a convenience wrapper that allows the caller to specify the containerfile
+        # either as a full path or simply as an alternate name. If the 'containerfile' input
+        # has a '/' in it then we assume it's a path and provide it as is. If it does not have
+        # a '/' then we assume it's a bare filename and prepend the 'context' input to it to
+        # turn it into a path
+        CONTAINERFILE: ${{ contains(inputs.containerfile, '/') && inputs.containerfile || format('{0}/{1}', inputs.context, inputs.containerfile) }}  # yamllint disable-line rule:line-length
+        ARGS: ${{ inputs.build-args || 'nothing' }}
+        REGISTRY: ${{ inputs.registry }}
+        TAGS: ${{ format('{0};{1}', github.sha, inputs.tags) }}
+      run: |
+        echo "containerfile=$CONTAINERFILE" >>$GITHUB_OUTPUT
+        echo "timestamp=$(date --iso-8601=seconds)" >>$GITHUB_OUTPUT
+
+        # If the args input is empty then this value will be set in the environment and
+        # needs to be handled to set the output as an empty JSON list.
+        if [ "$ARGS" = "nothing" ]; then
+          echo 'args=[]' >>$GITHUB_OUTPUT
+        else
+          # This pipe is replacing the semicolons in the args input with newlines,
+          # parsing the resulting string as a JSON array, and then dumping that JSON
+          # array back to a serialized string that can be parsed using `fromJSON()` later.
+          echo "args=$(echo $ARGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
+        fi
+
+        # These cuts are just slicing and dicing the registry up into it's component parts,
+        # mostly for convenient access by later steps without needing to recompute them.
+        # A standard registry URL has the format '<host>/<namespace>/<repository>' which
+        # this block parses out into individual outputs with the corresponding names.
+        echo "host=$(echo $REGISTRY | cut -d '/' -f 1)" >>$GITHUB_OUTPUT
+        echo "namespace=$(echo $REGISTRY | rev | cut -d '/' -f 2- | rev)" >>$GITHUB_OUTPUT
+        echo "repository=$(echo $REGISTRY | rev | cut -d '/' -f 1 | rev)" >>$GITHUB_OUTPUT
+        echo "registry=$(echo $REGISTRY)" >>$GITHUB_OUTPUT
+
+        # This pipe is doing the same as the above args pipe but for the tags input.
+        echo "tags=$(echo $TAGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
+
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+        submodules: ${{ inputs.requires-submodules && 'recursive' || 'false' }}
+        fetch-depth: ${{ inputs.requires-deep-history && '0' || '1' }}
+        lfs: ${{ inputs.requires-lfs }}
+
+    - name: Build image
+      id: build
+      uses: redhat-actions/buildah-build@v2
+      with:
+        context: ${{ inputs.context }}
+        containerfiles: |
+          ${{ steps.parameters.outputs.containerfile }}
+        layers: true
+        image: ${{ steps.parameters.outputs.registry }}
+        tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
+        build-args: |
+          ${{ join(fromJson(steps.parameters.outputs.args), '\n') }}
+        # yamllint disable rule:line-length
+        labels: |
+          org.opencontainers.image.created=${{ steps.parameters.outputs.timestamp }}
+          press.freedom.metadata.source.repository=${{ github.server_url }}/${{ github.repository }}
+          press.freedom.metadata.source.commit=${{ github.sha }}
+          press.freedom.metadata.source.ref=${{ github.ref_name }}
+          press.freedom.metadata.build.orchestrator=github_actions
+          press.freedom.metadata.build.job=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_number }}
+          press.freedom.metadata.build.initiator=${{ github.triggering_actor }}
+          press.freedom.metadata.build.workflow=${{ github.server_url }}/${{ github.workflow_ref }}
+          press.freedom.metadata.build.workflow-sha=${{ github.workflow_sha }}
+        # yamllint enable rule: line-length
+
+    - name: Export image
+      id: export-image
+      env:
+        IMAGE: ${{ format('{0}:{1}', steps.parameters.outputs.registry, github.sha) }}
+        EXPORT_FILE: ${{ runner.temp }}/${{ steps.parameters.outputs.repository }}.tar
+      run: |
+        echo "digest=$(podman image inspect $IMAGE | jq -r '.[0].Digest')" >>$GITHUB_OUTPUT
+
+        podman image save "$IMAGE" --output "$EXPORT_FILE"
+
+        echo "export-file=$EXPORT_FILE" >>$GITHUB_OUTPUT
+
+    - name: Upload image artifact
+      id: upload-artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.parameters.outputs.repository }}-${{ github.sha }}
+        path: ${{ steps.export-image.outputs.export-file }}
+        if-no-files-found: error
+        # This is intentionally set as low as possible to avoid going over artifact
+        # quotas on very active repositories. The purpose of the artifact is to reference
+        # the built image in later jobs of the same workflow run only, so a long-lived
+        # artifact is neither needed nor desirable. That's what registries are for.
+        retention-days: 1
+
+    outputs:
+      digest: ${{ steps.export-image.outputs.digest }}
+      url: ${{ format('{0}:{1}', steps.parameters.outputs.registry, github.sha) }}
+      artifact-id: ${{ steps.upload-artifact.outputs.artifact-id }}
+      artifact-checksum: ${{ steps.upload-artifact.outputs.artifact-digest }}
+      artifact-name: ${{ steps.parameters.outputs.repository }}-${{ github.sha }}
+      push-host: ${{ steps.parameters.outputs.host }}
+      push-tags: ${{ steps.parameters.outputs.tags }}
+      push-image-file-name: ${{ steps.parameters.outputs.repository }}.tar
+      push-registry: ${{ steps.parameters.outputs.registry }}
+
+  push:
+    name: Push
+    runs-on: ubuntu-latest
+    if: ${{ needs.build.outputs.push-host != 'localhost' }}
+    needs:
+    - build
+    steps:
+    - name: Download image artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ needs.build.outputs.artifact-name }}
+        path: ${{ runner.temp }}
+
+    - name: Load image
+      env:
+        LOAD_PATH: ${{ runner.temp }}/${{ needs.build.outputs.push-image-file-name }}
+        LOAD_TAG: ${{ needs.build.outputs.url }}
+        REGISTRY: ${{ needs.build.outputs.push-registry }}
+        TAGS: ${{ join(fromJson(needs.build.outputs.push-tags), ' ') }}
+      run: |
+        podman image load --input "$LOAD_PATH"
+
+        # Saved images only persist the tag they were exported by. So to
+        # ensure that all intended tags get persisted to the remote registry
+        # we need to add them back here
+        for tag in $TAGS; do
+          podman image tag "$LOAD_TAG" "$REGISTRY":"$tag"
+        done
+
+    - name: Push image
+      id: push
+      uses: redhat-actions/push-to-registry@v2
+      with:
+        image: ${{ needs.build.outputs.push-registry }}
+        tags: ${{ join(fromJson(needs.build.outputs.push-tags), ' ') }}
+        registry: ${{ needs.build.outputs.push-host }}
+        username: ${{ secrets.registry-username || github.actor }}
+        password: ${{ secrets.registry-password || secrets.GITHUB_TOKEN }}
