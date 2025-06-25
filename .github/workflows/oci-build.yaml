@@ -120,7 +120,7 @@ jobs:
         # has a '/' in it then we assume it's a path and provide it as is. If it does not have
         # a '/' then we assume it's a bare filename and prepend the 'context' input to it to
         # turn it into a path
-        CONTAINERFILE: ${{ contains(inputs.containerfile, '/') && inputs.containerfile || format('{0}/{1}', inputs.context, inputs.containerfile) }}
+        CONTAINERFILE: ${{ contains(inputs.containerfile, '/') && inputs.containerfile || format('{0}/{1}', inputs.context, inputs.containerfile) }}  # yamllint disable-line rule:line-length
         ARGS: ${{ inputs.build-args || 'nothing' }}
         REGISTRY: ${{ inputs.registry }}
         TAGS: ${{ format('{0};{1}', github.sha, inputs.tags) }}
@@ -171,6 +171,7 @@ jobs:
         tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
         build-args: |
           ${{ join(fromJson(steps.parameters.outputs.args), '\n') }}
+        # yamllint disable rule:line-length
         labels: |
           org.opencontainers.image.created=${{ steps.parameters.outputs.timestamp }}
           press.freedom.metadata.source.repository=${{ github.server_url }}/${{ github.repository }}
@@ -181,6 +182,7 @@ jobs:
           press.freedom.metadata.build.initiator=${{ github.triggering_actor }}
           press.freedom.metadata.build.workflow=${{ github.server_url }}/${{ github.workflow_ref }}
           press.freedom.metadata.build.workflow-sha=${{ github.workflow_sha }}
+        # yamllint enable rule: line-length
 
     - name: Export image
       id: export-image
