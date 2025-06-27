@@ -107,6 +107,12 @@ on:
           SHA256 checksum of the Github Actions artifact containing the image archive. This
           checksum can be used to validate the artifact in later jobs if necessary.
         value: ${{ jobs.build.outputs.artifact-checksum }}
+
+      artifact-image:
+        description: >-
+          File name of the image exported and stored in the artifact. This can be used to restore
+          the image using the ``podman load`` command.
+        value: ${{ jobs.build.outputs.artifact-image-file-name }}
 jobs:
   build:
     name: Build
@@ -215,9 +221,9 @@ jobs:
       artifact-id: ${{ steps.upload-artifact.outputs.artifact-id }}
       artifact-checksum: ${{ steps.upload-artifact.outputs.artifact-digest }}
       artifact-name: ${{ steps.parameters.outputs.repository }}-${{ github.sha }}
+      artifact-image-file-name: ${{ steps.parameters.outputs.repository }}.tar
       push-host: ${{ steps.parameters.outputs.host }}
       push-tags: ${{ steps.parameters.outputs.tags }}
-      push-image-file-name: ${{ steps.parameters.outputs.repository }}.tar
       push-registry: ${{ steps.parameters.outputs.registry }}
 
   push:
@@ -235,7 +241,7 @@ jobs:
 
     - name: Load image
       env:
-        LOAD_PATH: ${{ runner.temp }}/${{ needs.build.outputs.push-image-file-name }}
+        LOAD_PATH: ${{ runner.temp }}/${{ needs.build.outputs.artifact-image-file-name }}
         LOAD_TAG: ${{ needs.build.outputs.url }}
         REGISTRY: ${{ needs.build.outputs.push-registry }}
         TAGS: ${{ join(fromJson(needs.build.outputs.push-tags), ' ') }}
