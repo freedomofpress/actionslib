@@ -21,7 +21,7 @@ on:
       build-args:
         description: >-
           Build arguments to pass into the build operation. Arguments are provided in
-          ``key=value`` format, with different arguments separated by semicolons (``;``).
+          ``key=value`` format, with different arguments separated by newlines.
         type: string
         default: ""
 
@@ -58,7 +58,7 @@ on:
       tags:
         description: >-
           Additional tags to apply to the image once built. Multiple tags can be specified as
-          separated by semicolons (``;``). All images will be assigned a tag corresponding to the
+          separated by newlines. All images will be assigned a tag corresponding to the
           git commit SHA that triggered the build.
         type: string
         default: ""
@@ -134,17 +134,6 @@ jobs:
         echo "containerfile=$CONTAINERFILE" >>$GITHUB_OUTPUT
         echo "timestamp=$(date --iso-8601=seconds)" >>$GITHUB_OUTPUT
 
-        # If the args input is empty then this value will be set in the environment and
-        # needs to be handled to set the output as an empty JSON list.
-        if [ "$ARGS" = "nothing" ]; then
-          echo 'args=[]' >>$GITHUB_OUTPUT
-        else
-          # This pipe is replacing the semicolons in the args input with newlines,
-          # parsing the resulting string as a JSON array, and then dumping that JSON
-          # array back to a serialized string that can be parsed using `fromJSON()` later.
-          echo "args=$(echo $ARGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
-        fi
-
         # These cuts are just slicing and dicing the registry up into it's component parts,
         # mostly for convenient access by later steps without needing to recompute them.
         # A standard registry URL has the format '<host>/<namespace>/<repository>' which
@@ -153,9 +142,6 @@ jobs:
         echo "namespace=$(echo $REGISTRY | rev | cut -d '/' -f 2- | rev)" >>$GITHUB_OUTPUT
         echo "repository=$(echo $REGISTRY | rev | cut -d '/' -f 1 | rev)" >>$GITHUB_OUTPUT
         echo "registry=$(echo $REGISTRY)" >>$GITHUB_OUTPUT
-
-        # This pipe is doing the same as the above args pipe but for the tags input.
-        echo "tags=$(echo $TAGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
 
     - name: Checkout
       uses: actions/checkout@v4
@@ -174,9 +160,11 @@ jobs:
           ${{ steps.parameters.outputs.containerfile }}
         layers: true
         image: ${{ steps.parameters.outputs.registry }}
-        tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
+        tags: |
+          ${{ github.sha }}
+          ${{ inputs.tags }}
         build-args: |
-          ${{ join(fromJson(steps.parameters.outputs.args), '\n') }}
+          ${{ inputs.build-args }}
         # yamllint disable rule:line-length
         labels: |
           org.opencontainers.image.created=${{ steps.parameters.outputs.timestamp }}
@@ -223,7 +211,9 @@ jobs:
       artifact-name: ${{ steps.parameters.outputs.repository }}-${{ github.sha }}
       artifact-image-file-name: ${{ steps.parameters.outputs.repository }}.tar
       push-host: ${{ steps.parameters.outputs.host }}
-      push-tags: ${{ steps.parameters.outputs.tags }}
+      push-tags: |
+        ${{ github.sha }}
+        ${{ inputs.tags }}
       push-registry: ${{ steps.parameters.outputs.registry }}
 
   push:
