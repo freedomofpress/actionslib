@@ -10,6 +10,10 @@ on:
     - act/poetry/**
     - .github/workflows/_test_act_poetry.yaml
 
+permissions:
+  content: read
+  actions: read
+
 jobs:
   test-poetry:
     name: Py${{ matrix.python-version }} ${{ matrix.combos.root == 'true' && '+root' || '' }} ${{ matrix.combos.extras != '' && '+extras' || '' }} ${{ matrix.combos.groups != '' && '+groups' || '' }}  # yamllint disable-line rule:line-length

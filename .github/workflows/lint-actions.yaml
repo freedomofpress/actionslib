@@ -50,12 +50,12 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Install zizmor
-      run: python -m pip install 'zizmor==${{ env.ZIZMOR_VERSION }}'
+      run: python -m pip install "zizmor==$ZIZMOR_VERSION"
       env:
         ZIZMOR_VERSION: ${{ inputs.zizmor-version }}
 
     - name: Lint
-      run: zizmor ${{ env.ZIZMOR_PATH }} ${{ env.ZIZMOR_OPTIONS }}
+      run: zizmor "$ZIZMOR_PATH" $ZIZMOR_OPTIONS
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         ZIZMOR_PATH: ${{ inputs.path }}
