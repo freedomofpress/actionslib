@@ -2,7 +2,13 @@
 name: Test:FPF/Poetry
 
 on:
-  workflow_call:
+  workflow_dispatch:
+
+  pull_request:
+    types: ["opened", "synchronize"]
+    paths:
+    - act/poetry/**
+    - .github/workflows/_test_act_poetry.yaml
 
 jobs:
   test-poetry:
