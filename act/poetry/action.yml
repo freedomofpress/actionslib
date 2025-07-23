@@ -59,14 +59,14 @@ runs:
   - name: Install Poetry
     shell: bash
     env:
-      poetry-requirements: ${{ inputs.poetry-requirements || format('{0}/requirements-poetry.txt', github.action_path) }}  # yamllint disable-line rule:line-length
+      POETRY_REQUIREMENTS: ${{ inputs.poetry-requirements || format('{0}/requirements-poetry.txt', github.action_path) }}  # yamllint disable-line rule:line-length
     run: |
       mkdir --parents ~/.local/share/poetry-runtime
       which python
       python --version
       python -m venv ~/.local/share/poetry-runtime
       ~/.local/share/poetry-runtime/bin/pip install \
-        --requirement='${{ env.poetry-requirements }}' \
+        --requirement="$POETRY_REQUIREMENTS" \
         --disable-pip-version-check \
         --require-hashes \
         --no-color
