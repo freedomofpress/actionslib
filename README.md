@@ -129,21 +129,21 @@ they support.
 
 Index of available Reusable Workflows in this repository.
 
-| Name           | Description                                                                                                                 | Docs                                          |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `lint-actions` | Use [Zizmor](https://woodruffw.github.io/zizmor/) to run static analysis checks on Github Actions workflow files.           | [:link:](.github/workflows/lint-actions.yaml) |
-| `publish-r2`   | Use rclone to publish static content to Cloudflare's R2                                                                     | [:link:](.github/workflows/publish-r2.yaml)   |
-| `oci-build`    | Use [buildah](https://buildah.io/) to build (and [podman](https://podman.io/) to optionally publish) an OCI container image | [:link:](.github/workflows/oci-build.yaml)    |
+| Name           | Description                                                                                                                 | Docs                                          | Tests |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ----- |
+| `lint-actions` | Use [Zizmor](https://woodruffw.github.io/zizmor/) to run static analysis checks on Github Actions workflow files.           | [:link:](.github/workflows/lint-actions.yaml) |       |
+| `publish-r2`   | Use rclone to publish static content to Cloudflare's R2                                                                     | [:link:](.github/workflows/publish-r2.yaml)   |       |
+| `oci-build`    | Use [buildah](https://buildah.io/) to build (and [podman](https://podman.io/) to optionally publish) an OCI container image | [:link:](.github/workflows/oci-build.yaml)    |       |
 
 ## Available Composite Actions
 
 Index of available Composite Actions in the repository.
 
-| Name              | Description                                                                                                                                                                                  | Docs                           |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| `poetry`          | Sets up a local Python environment using [Poetry](https://python-poetry.org/)                                                                                                                | [:link:](act/poetry/)          |
-| `delete-artifact` | Deletes a [Github Action Artifact](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow) given the artifact's name | [:link:](act/delete-artifact/) |
-| `signed-commit`   | Creates a GPG signed commit using the Github API                                                                                                                                             | [:link:](act/signed-commit/)   |
+| Name              | Description                                                                                                                                                                                  | Docs                           | Tests                                                                                                                                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `poetry`          | Sets up a local Python environment using [Poetry](https://python-poetry.org/)                                                                                                                | [:link:](act/poetry/)          | [![Test:FPF/Poetry](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_poetry.yaml/badge.svg)](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_poetry.yaml) |
+| `delete-artifact` | Deletes a [Github Action Artifact](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow) given the artifact's name | [:link:](act/delete-artifact/) |                                                                                                                                                                                                            |
+| `signed-commit`   | Creates a GPG signed commit using the Github API                                                                                                                                             | [:link:](act/signed-commit/)   |                                                                                                                                                                                                            |
 
 ## Developing
 
