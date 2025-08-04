@@ -7,11 +7,11 @@ on:
   pull_request:
     types: ["opened", "synchronize"]
     paths:
-    - act/poetry/**
-    - .github/workflows/_test_act_poetry.yaml
+    - 'act/poetry/**'
+    - '.github/workflows/_test_act_poetry.yaml'
 
 permissions:
-  content: read
+  contents: read
   actions: read
 
 jobs:
