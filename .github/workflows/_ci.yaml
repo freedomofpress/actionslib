@@ -18,9 +18,9 @@ jobs:
     strategy:
       matrix:
         target:
-        - title: Reusable Workflows
+        - title: Workflows
           directory: "."
-        - title: Composite Actions
+        - title: Composites
           directory: "./act/"
     uses: ./.github/workflows/lint-actions.yaml
     with:

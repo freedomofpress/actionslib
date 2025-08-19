@@ -1,0 +1,125 @@
+---
+name: Test:FPF/Poetry
+
+on:
+  workflow_dispatch:
+
+  pull_request:
+    types: ["opened", "synchronize"]
+    paths:
+    - 'act/poetry/**'
+    - '.github/workflows/_test_act_poetry.yaml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  test-poetry:
+    name: Py${{ matrix.python-version }} ${{ matrix.combos.root == 'true' && '+root' || '' }} ${{ matrix.combos.extras != '' && '+extras' || '' }} ${{ matrix.combos.groups != '' && '+groups' || '' }}  # yamllint disable-line rule:line-length
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+        - '3.10'
+        - '3.11'
+        - '3.12'
+        - '3.13'
+        combos:
+        - root: 'true'
+          extras: testing
+          groups: ''
+        - root: 'true'
+          extras: testing
+          groups: testing
+        - root: 'true'
+          extras: ''
+          groups: testing
+        - root: 'false'
+          extras: ''
+          groups: testing
+        - root: 'false'
+          extras: ''
+          groups: ''
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Configure environment
+      uses: ./act/poetry
+      with:
+        python-version: ${{ matrix.python-version }}
+        poetry-directory: ./act/poetry/test_resources
+        root: ${{ matrix.combos.root }}
+        groups: ${{ matrix.combos.groups }}
+        extras: ${{ matrix.combos.extras }}
+
+    - name: Fetch environment information
+      working-directory: ./act/poetry/test_resources
+      id: envinfo
+      # yamllint disable rule:line-length
+      run: |
+        echo "pyversion=$(poetry run python --version | cut -d ' ' -f 2 | cut -d '.' -f 1,2)" >>$GITHUB_OUTPUT
+        echo "deps<<EOF" >>$GITHUB_OUTPUT
+        poetry run python -m pip list >>$GITHUB_OUTPUT
+        echo "EOF" >>$GITHUB_OUTPUT
+      # yamllint enable rule:line-length
+
+    - name: Verify python version
+      working-directory: ./act/poetry/test_resources
+      env:
+        actual: ${{ steps.envinfo.outputs.pyversion }}
+        expected: ${{ matrix.python-version }}
+      run: |
+        poetry env info
+
+        if [ $actual = $expected ]; then
+          echo "PASS: found expected Python version ($actual)"
+        else
+          echo "FAIL: expected Python version $expected, found Python version $actual"
+          exit 1
+        fi
+
+    - name: Verify root module
+      working-directory: ./act/poetry/test_resources
+      env:
+        deps: ${{ steps.envinfo.outputs.deps }}
+      # yamllint disable rule:line-length
+      run: |
+        if echo $deps | grep ${{ matrix.combos.root == 'true' && ' ' || '-v'}} test-resources; then
+          echo "PASS: root module (test-resources) is${{ matrix.combos.root == 'true' && ' ' || ' not '}}installed"
+        else
+          echo "FAIL: root module (test-resources) is${{ matrix.combos.root != 'true' && ' ' || ' not '}}installed"
+          exit 1
+        fi
+      # yamllint enable rule:line-length
+
+    - name: Verify extra dependencies
+      working-directory: ./act/poetry/test_resources
+      env:
+        deps: ${{ steps.envinfo.outputs.deps }}
+      # yamllint disable rule:line-length
+      run: |
+        if echo $deps | grep ${{ matrix.combos.extras != '' && ' ' || '-v'}} toml; then
+          echo "PASS: extra dependency (toml) is${{ matrix.combos.extras != '' && ' ' || ' not ' }}installed"
+        else
+          echo "FAIL: extra dependency (toml) is${{ matrix.combos.extras == '' && ' ' || ' not ' }}installed"
+          exit 1
+        fi
+      # yamllint enable rule:line-length
+
+    - name: Verify group dependencies
+      working-directory: ./act/poetry/test_resources
+      env:
+        deps: ${{ steps.envinfo.outputs.deps }}
+      # yamllint disable rule:line-length
+      run: |
+        if echo $deps | grep ${{ matrix.combos.groups != '' && ' ' || '-v'}} requests; then
+          echo "PASS: group dependency (requests) is${{ matrix.combos.groups != '' && ' ' || ' not ' }}installed"
+        else
+          echo "FAIL: group dependency (requests) is${{ matrix.combos.groups == '' && ' ' || ' not ' }}installed"
+          exit 1
+        fi
+      # yamllint enable rule:line-length
