@@ -21,7 +21,7 @@ on:
       build-args:
         description: >-
           Build arguments to pass into the build operation. Arguments are provided in
-          ``key=value`` format, with different arguments separated by semicolons (``;``).
+          ``key=value`` format, with different arguments separated by newlines (``\n``).
         type: string
         default: ""
 
@@ -127,34 +127,24 @@ jobs:
         # a '/' then we assume it's a bare filename and prepend the 'context' input to it to
         # turn it into a path
         CONTAINERFILE: ${{ contains(inputs.containerfile, '/') && inputs.containerfile || format('{0}/{1}', inputs.context, inputs.containerfile) }}  # yamllint disable-line rule:line-length
-        ARGS: ${{ inputs.build-args || 'nothing' }}
         REGISTRY: ${{ inputs.registry }}
         TAGS: ${{ format('{0};{1}', github.sha, inputs.tags) }}
       run: |
         echo "containerfile=$CONTAINERFILE" >>$GITHUB_OUTPUT
         echo "timestamp=$(date --iso-8601=seconds)" >>$GITHUB_OUTPUT
 
-        # If the args input is empty then this value will be set in the environment and
-        # needs to be handled to set the output as an empty JSON list.
-        if [ "$ARGS" = "nothing" ]; then
-          echo 'args=[]' >>$GITHUB_OUTPUT
-        else
-          # This pipe is replacing the semicolons in the args input with newlines,
-          # parsing the resulting string as a JSON array, and then dumping that JSON
-          # array back to a serialized string that can be parsed using `fromJSON()` later.
-          echo "args=$(echo $ARGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
-        fi
-
         # These cuts are just slicing and dicing the registry up into it's component parts,
         # mostly for convenient access by later steps without needing to recompute them.
         # A standard registry URL has the format '<host>/<namespace>/<repository>' which
         # this block parses out into individual outputs with the corresponding names.
+        echo "registry=$(echo $REGISTRY)" >>$GITHUB_OUTPUT
         echo "host=$(echo $REGISTRY | cut -d '/' -f 1)" >>$GITHUB_OUTPUT
         echo "namespace=$(echo $REGISTRY | rev | cut -d '/' -f 2- | rev)" >>$GITHUB_OUTPUT
         echo "repository=$(echo $REGISTRY | rev | cut -d '/' -f 1 | rev)" >>$GITHUB_OUTPUT
-        echo "registry=$(echo $REGISTRY)" >>$GITHUB_OUTPUT
 
-        # This pipe is doing the same as the above args pipe but for the tags input.
+        # This pipe is replacing the semicolons in the args input with newlines,
+        # parsing the resulting string as a JSON array, and then dumping that JSON
+        # array back to a serialized string that can be parsed using `fromJSON()` later.
         echo "tags=$(echo $TAGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
 
     - name: Checkout
@@ -175,8 +165,7 @@ jobs:
         layers: true
         image: ${{ steps.parameters.outputs.registry }}
         tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
-        build-args: |
-          ${{ join(fromJson(steps.parameters.outputs.args), '\n') }}
+        build-args: ${{ inputs.build-args }}
         # yamllint disable rule:line-length
         labels: |
           org.opencontainers.image.created=${{ steps.parameters.outputs.timestamp }}
