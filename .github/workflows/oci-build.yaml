@@ -220,7 +220,7 @@ jobs:
       url: ${{ format('{0}:{1}', steps.parameters.outputs.registry, github.sha) }}
       artifact-id: ${{ steps.upload-artifact.outputs.artifact-id }}
       artifact-checksum: ${{ steps.upload-artifact.outputs.artifact-digest }}
-      artifact-name: ${{ steps.parameters.outputs.repository }}-${{ github.sha }}
+      artifact-name: ${{ steps.parameters.outputs.repository }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
       artifact-image-file-name: ${{ steps.parameters.outputs.repository }}.tar
       push-host: ${{ steps.parameters.outputs.host }}
       push-tags: ${{ steps.parameters.outputs.tags }}
