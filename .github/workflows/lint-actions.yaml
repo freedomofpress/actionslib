@@ -26,6 +26,10 @@ on:
         type: string
         default: "--min-severity=medium"
 
+    secrets:
+      github-token:
+        required: true
+
 env:
   PYTHON_VERSION: "3.12"
 
@@ -42,7 +46,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         persist-credentials: false
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.github-token }}
 
     - name: Install python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v4
@@ -57,6 +61,6 @@ jobs:
     - name: Lint
       run: zizmor "$ZIZMOR_PATH" $ZIZMOR_OPTIONS
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.github-token }}
         ZIZMOR_PATH: ${{ inputs.path }}
         ZIZMOR_OPTIONS: ${{ inputs.zizmor-options }}
