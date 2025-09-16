@@ -25,6 +25,12 @@ on:
         type: string
         default: ""
 
+      build-ref:
+        description: >-
+          Repository ref to build the image from. Defaults to the current job reference
+        type: string
+        default: ""
+
       requires-submodules:
         description: >-
           Indicates the build requires git submodules to be checked out. If true, submodules will
@@ -147,9 +153,29 @@ jobs:
         # array back to a serialized string that can be parsed using `fromJSON()` later.
         echo "tags=$(echo $TAGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
 
+    # The duplicate 'checkout' jobs here are to handle an annoying detail with the
+    # actions/checkout action. The action allows a 'ref' to be specified to checkout
+    # a specific ref, but the logic for determining the default ref is extremely complicated
+    # and not able to be easily reimplemented here. So the obvious way to do this would be
+    # something like "ref: ${{ inputs.build-ref || default }}" but there's no easy way to
+    # determine that "default" value without having serious regressions compared to the
+    # actions/checkout builtin default determination logic. So, we have two different
+    # checkout jobs: one that specifies a default ref (if provided) and one that doesn't
+    # so that we can piggy back on the actions/checkout default ref determination logic
     - name: Checkout
       uses: actions/checkout@v4
+      if: ${{ ! inputs.build-ref }}
       with:
+        persist-credentials: false
+        submodules: ${{ inputs.requires-submodules && 'recursive' || 'false' }}
+        fetch-depth: ${{ inputs.requires-deep-history && '0' || '1' }}
+        lfs: ${{ inputs.requires-lfs }}
+
+    - name: Checkout Ref
+      uses: actions/checkout@v4
+      if: ${{ inputs.build-ref }}
+      with:
+        ref: ${{ inputs.build-ref }}
         persist-credentials: false
         submodules: ${{ inputs.requires-submodules && 'recursive' || 'false' }}
         fetch-depth: ${{ inputs.requires-deep-history && '0' || '1' }}
