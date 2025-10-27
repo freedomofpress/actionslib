@@ -19,7 +19,7 @@ on:
       zizmor-version:
         description: Version of Zizmor to install
         type: string
-        default: "1.5.1"
+        default: "1.16.0"
 
       zizmor-options:
         description: Additional CLI options to pass to the Zizmor command.
