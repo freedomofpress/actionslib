@@ -19,7 +19,7 @@ on:
       zizmor-version:
         description: Version of Zizmor to install
         type: string
-        default: "1.5.1"
+        default: "1.16.0"
 
       zizmor-options:
         description: Additional CLI options to pass to the Zizmor command.
@@ -28,6 +28,14 @@ on:
 
 env:
   PYTHON_VERSION: "3.12"
+  ZIZMOR_DEFAULT_CONFIG: |
+    ---
+    rules:
+      unpinned-uses:
+        config:
+          policies:
+            # By default allow all actions to be pinned to floating refs
+            "*": ref-pin
 
 permissions:
   contents: read
@@ -53,6 +61,14 @@ jobs:
       run: python -m pip install "zizmor==$ZIZMOR_VERSION"
       env:
         ZIZMOR_VERSION: ${{ inputs.zizmor-version }}
+
+    - name: Configure zizmor
+      run: |
+        # If the repository specifies its own config then we should
+        # respect that
+        if [ ! -f .github/zizmor.yml ]; then
+          echo "${ZIZMOR_DEFAULT_CONFIG}" >>.github/zizmor.yml
+        fi
 
     - name: Lint
       run: zizmor "$ZIZMOR_PATH" $ZIZMOR_OPTIONS
