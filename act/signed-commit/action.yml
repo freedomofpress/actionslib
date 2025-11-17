@@ -1,17 +1,11 @@
 ---
-# Adapted from here: https://gist.github.com/swinton/03e84635b45c78353b1f71e41007fc7c
 
-name: FPF/Signed-Commit
-
-description: Update a file with new content with a signed commit
+name: FPF/Signed-Commit-GPG
+description: Create a GPG-signed commit modifying one or more files
 
 inputs:
-  file:
-    description: Path to the file to update
-    required: true
-
-  branch:
-    description: Branch that the commit should be added to
+  files:
+    description: List of files to stage & commit
     required: true
 
   message:
@@ -29,30 +23,73 @@ inputs:
     required: false
     default: "."
 
-  github-token:
-    description: >-
-      Github token used for interacting with Actions API. Must have Contents:Write permissions
-    required: true
+outputs:
+  commit-sha:
+    description: SHA of the created commit
+  commit-url:
+    description: URL of the commit on GitHub
 
 runs:
   using: composite
   steps:
-  - name: Commit changes
-    shell: bash
-    working-directory: ${{ inputs.repo-path }}
-    env:
-      GH_TOKEN: ${{ inputs.github-token }}
-      BRANCH: ${{ inputs.branch }}
-      FILE: ${{ inputs.file }}
-      REPO: ${{ inputs.repo || github.repository }}
-      MESSAGE: ${{ inputs.message }}
-    run: |
-      export SHA=$(git rev-parse "$BRANCH:$FILE")
-      export CONTENT=$(base64 -i "$FILE")
 
-      gh api --method PUT "/repos/$REPO/contents/$FILE" \
-          --field message="$MESSAGE" \
-          --field content="$CONTENT" \
-          --field encoding="base64" \
-          --field branch="$BRANCH" \
-          --field sha="$SHA"
+    - name: Import PGP key
+      shell: bash
+      env:
+        PGP_KEY_B64: ${{ secrets.FPF_BRANCH_UPDATER_PGP_KEY }}
+      run: |
+        if [[ -z "$PGP_KEY_B64" ]]; then
+          echo "Missing required secret: FPF_BRANCH_UPDATER_PGP_KEY"
+          exit 1
+        fi
+
+        echo "$PGP_KEY_B64" | base64 --decode | gpg --import
+
+        KEY_ID=$(gpg --list-secret-keys --keyid-format=long | grep sec | head -n1 | awk '{print $2}' | cut -d'/' -f2)
+        echo "GPG_KEY_ID=$KEY_ID" >> $GITHUB_ENV
+
+    - name: Configure Git for signed commits
+      shell: bash
+      working-directory: ${{ inputs.repo-path }}
+      env:
+        GIT_EMAIL: ${{ vars.FPF_BRANCH_UPDATER_PGP_EMAIL }}
+        GIT_NAME:  ${{ vars.FPF_BRANCH_UPDATER_PGP_IDENTITY }}
+        GPG_KEY_ID: ${{ env.GPG_KEY_ID }}
+      run: |
+        git config user.email "$GIT_EMAIL"
+        git config user.name "$GIT_NAME"
+        git config user.signingkey "$GPG_KEY_ID"
+        git config commit.gpgsign true
+        git config tag.gpgsign true
+
+    - name: Commit changes
+      shell: bash
+      working-directory: ${{ inputs.repo-path }}
+      env:
+        FILES: ${{ inputs.files }}
+        MSG: ${{ inputs.message }}
+      run: |
+        echo "$FILES" | while IFS= read -r f; do
+          [[ -z "$f" ]] && continue
+          git add "$f"
+        done
+
+        git commit -m "$MSG"
+
+        SHA=$(git rev-parse HEAD)
+        echo "COMMIT_SHA=$SHA" >> $GITHUB_ENV
+
+    - name: Push to origin
+      shell: bash
+      working-directory: ${{ inputs.repo-path }}
+      run: |
+        git push
+
+    - name: Emit outputs
+      shell: bash
+      env:
+        SHA: ${{ env.COMMIT_SHA }}
+        REPO: ${{ inputs.repo || github.repository }}
+      run: |
+        echo "commit-sha=$SHA" >> $GITHUB_OUTPUT
+        echo "commit-url=https://github.com/$REPO/commit/$SHA" >> $GITHUB_OUTPUT
