@@ -4,6 +4,11 @@ name: FPF/Signed-Commit-GPG
 description: Create a GPG-signed commit modifying one or more files
 
 inputs:
+  create_branch:
+    description: "If set, the action will create/switch to this branch before committing"
+    required: false
+    default: ""
+
   files:
     description: List of files to stage & commit
     required: true
@@ -26,14 +31,17 @@ inputs:
 outputs:
   commit-sha:
     description: SHA of the created commit
+    value: ${{ steps.commit.outputs.sha }}
   commit-url:
     description: URL of the commit on GitHub
+    value: https://github.com/${{ inputs.repo || github.repository }}/commit/${{ steps.commit.outputs.sha }}
 
 runs:
   using: composite
   steps:
 
     - name: Import PGP key
+      id: import-gpg
       shell: bash
       env:
         PGP_KEY_B64: ${{ secrets.FPF_BRANCH_UPDATER_PGP_KEY }}
@@ -52,13 +60,26 @@ runs:
             | cut -d'/' -f2
         )
 
+        echo "key-id=$KEY_ID" >> "$GITHUB_OUTPUT"
+
+    - name: Create or switch to branch
+      if: ${{ inputs.create_branch != '' }}
+      shell: bash
+      working-directory: ${{ inputs.repo-path }}
+      env:
+        BRANCH: ${{ inputs.create_branch }}
+      run: |
+        echo "Switching to branch: $BRANCH"
+        git fetch origin "$BRANCH" || true
+        git checkout -B "$BRANCH" "origin/$BRANCH" || git checkout -B "$BRANCH"
+
     - name: Configure Git for signed commits
       shell: bash
       working-directory: ${{ inputs.repo-path }}
       env:
         GIT_EMAIL: ${{ vars.FPF_BRANCH_UPDATER_PGP_EMAIL }}
         GIT_NAME: ${{ vars.FPF_BRANCH_UPDATER_PGP_IDENTITY }}
-        GPG_KEY_ID: ${{ env.GPG_KEY_ID }}
+        GPG_KEY_ID: ${{ steps.import-gpg.outputs.key-id }}
       run: |
         git config user.email "$GIT_EMAIL"
         git config user.name "$GIT_NAME"
@@ -67,6 +88,7 @@ runs:
         git config tag.gpgsign true
 
     - name: Commit changes
+      id: commit
       shell: bash
       working-directory: ${{ inputs.repo-path }}
       env:
@@ -81,19 +103,18 @@ runs:
         git commit -m "$MSG"
 
         SHA=$(git rev-parse HEAD)
-        echo "COMMIT_SHA=$SHA" >> $GITHUB_ENV
+        echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
     - name: Push to origin
       shell: bash
       working-directory: ${{ inputs.repo-path }}
-      run: |
-        git push
-
-    - name: Emit outputs
-      shell: bash
       env:
-        SHA: ${{ env.COMMIT_SHA }}
-        REPO: ${{ inputs.repo || github.repository }}
+        BRANCH: ${{ inputs.create_branch }}
       run: |
-        echo "commit-sha=$SHA" >> $GITHUB_OUTPUT
-        echo "commit-url=https://github.com/$REPO/commit/$SHA" >> $GITHUB_OUTPUT
+        if [[ -n "$BRANCH" ]]; then
+          echo "Pushing new branch $BRANCH"
+          git push --set-upstream origin "$BRANCH"
+        else
+          echo "Pushing current branch"
+          git push
+        fi
