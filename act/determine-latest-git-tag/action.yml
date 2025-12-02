@@ -1,0 +1,39 @@
+---
+
+name: Determine latest git tag
+
+description: Fetch the latest non "rc|alpha|beta" tag
+
+inputs:
+  repo-path:
+    description: Path to the local git clone
+    required: true
+  tag-filter:
+    description: Tag filter for refs/tags/*
+    required: true
+
+outputs:
+  latest:
+    description: Latest stable tag
+    value: ${{ steps.fetch-latest-tag.outputs.latest }}
+
+runs:
+  using: composite
+  steps:
+    - name: Fetch latest version
+      id: fetch-latest-tag
+      shell: bash
+      env:
+        REPO_PATH: ${{ inputs.repo-path }}
+        TAG_FILTER: ${{ inputs.tag-filter }}
+      run: |
+        latest=$(
+          git -C "$REPO_PATH" \
+            for-each-ref "refs/tags/$TAG_FILTER" --format="%(refname:short)" \
+            | grep -Evi -- '-(rc|beta|alpha)' \
+            | sort -V \
+            | tail -n 1
+        )
+
+        echo "Latest stable tag: $latest"
+        echo "latest=$latest" >> "$GITHUB_OUTPUT"
