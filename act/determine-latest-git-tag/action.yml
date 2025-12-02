@@ -23,10 +23,13 @@ runs:
     - name: Fetch latest version
       id: fetch-latest-tag
       shell: bash
+      env:
+        REPO_PATH: ${{ inputs.repo-path }}
+        TAG_FILTER: ${{ inputs.tag-filter }}
       run: |
         latest=$(
-          git -C "${{ inputs.repo-path }}" \
-            for-each-ref "refs/tags/${{ inputs.tag-filter }}" --format="%(refname:short)" \
+          git -C "$REPO_PATH" \
+            for-each-ref "refs/tags/$TAG_FILTER" --format="%(refname:short)" \
             | grep -Evi -- '-(rc|beta|alpha)' \
             | sort -V \
             | tail -n 1
