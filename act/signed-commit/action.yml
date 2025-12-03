@@ -4,7 +4,7 @@ name: FPF/Signed-Commit-GPG
 description: Create a GPG-signed commit modifying one or more files
 
 inputs:
-  create_branch:
+  create-branch:
     description: "If set, the action will create/switch to this branch before committing"
     required: false
     default: ""
@@ -34,7 +34,7 @@ outputs:
     value: ${{ steps.commit.outputs.sha }}
   commit-url:
     description: URL of the commit on GitHub
-    value: https://github.com/${{ inputs.repo || github.repository }}/commit/${{ steps.commit.outputs.sha }}
+    value: https://github.com/${{ inputs.repo || github.repository }}/commit/${{ steps.commit.outputs.sha }}  # yamllint disable rule:line-length
 
 runs:
   using: composite
@@ -63,11 +63,11 @@ runs:
         echo "key-id=$KEY_ID" >> "$GITHUB_OUTPUT"
 
     - name: Create or switch to branch
-      if: ${{ inputs.create_branch != '' }}
+      if: ${{ inputs.create-branch != '' }}
       shell: bash
       working-directory: ${{ inputs.repo-path }}
       env:
-        BRANCH: ${{ inputs.create_branch }}
+        BRANCH: ${{ inputs.create-branch }}
       run: |
         echo "Switching to branch: $BRANCH"
         git fetch origin "$BRANCH" || true
@@ -109,7 +109,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.repo-path }}
       env:
-        BRANCH: ${{ inputs.create_branch }}
+        BRANCH: ${{ inputs.create-branch }}
       run: |
         if [[ -n "$BRANCH" ]]; then
           echo "Pushing new branch $BRANCH"
