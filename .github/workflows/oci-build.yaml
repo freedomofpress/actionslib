@@ -69,6 +69,28 @@ on:
         type: string
         default: ""
 
+      default-branch:
+        description: >-
+          The repository's default branch. Used for determining whether to add the 'latest' tag
+        type: string
+        default: main
+
+      add-latest-tag-on-default:
+        description: >-
+          Whether to add the 'latest' tag to the built image when the current ref is the default
+          branch (as specified by the ``default-branch`` input)
+        type: boolean
+        default: true
+
+      add-branch-tags:
+        description: >-
+          Whether to add the common '<branch>' and '<branch>-<short sha>' tags to the built image.
+          If true then the image will also be tagged with the current branch name, and the current
+          branch name coupled with the short commit SHA. Note that if the current branch name is
+          not a valid tag then an error will be raised.
+        type: boolean
+        default: false
+
     secrets:
       registry-username:
         description: >-
@@ -124,35 +146,6 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-    - name: Set build parameters
-      id: parameters
-      env:
-        # This is a convenience wrapper that allows the caller to specify the containerfile
-        # either as a full path or simply as an alternate name. If the 'containerfile' input
-        # has a '/' in it then we assume it's a path and provide it as is. If it does not have
-        # a '/' then we assume it's a bare filename and prepend the 'context' input to it to
-        # turn it into a path
-        CONTAINERFILE: ${{ contains(inputs.containerfile, '/') && inputs.containerfile || format('{0}/{1}', inputs.context, inputs.containerfile) }}  # yamllint disable-line rule:line-length
-        REGISTRY: ${{ inputs.registry }}
-        TAGS: ${{ format('{0};{1}', github.sha, inputs.tags) }}
-      run: |
-        echo "containerfile=$CONTAINERFILE" >>$GITHUB_OUTPUT
-        echo "timestamp=$(date --iso-8601=seconds)" >>$GITHUB_OUTPUT
-
-        # These cuts are just slicing and dicing the registry up into it's component parts,
-        # mostly for convenient access by later steps without needing to recompute them.
-        # A standard registry URL has the format '<host>/<namespace>/<repository>' which
-        # this block parses out into individual outputs with the corresponding names.
-        echo "registry=$(echo $REGISTRY)" >>$GITHUB_OUTPUT
-        echo "host=$(echo $REGISTRY | cut -d '/' -f 1)" >>$GITHUB_OUTPUT
-        echo "namespace=$(echo $REGISTRY | rev | cut -d '/' -f 2- | rev)" >>$GITHUB_OUTPUT
-        echo "repository=$(echo $REGISTRY | rev | cut -d '/' -f 1 | rev)" >>$GITHUB_OUTPUT
-
-        # This pipe is replacing the semicolons in the args input with newlines,
-        # parsing the resulting string as a JSON array, and then dumping that JSON
-        # array back to a serialized string that can be parsed using `fromJSON()` later.
-        echo "tags=$(echo $TAGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
-
     # The duplicate 'checkout' jobs here are to handle an annoying detail with the
     # actions/checkout action. The action allows a 'ref' to be specified to checkout
     # a specific ref, but the logic for determining the default ref is extremely complicated
@@ -180,6 +173,64 @@ jobs:
         submodules: ${{ inputs.requires-submodules && 'recursive' || 'false' }}
         fetch-depth: ${{ inputs.requires-deep-history && '0' || '1' }}
         lfs: ${{ inputs.requires-lfs }}
+
+    - name: Set build parameters
+      id: parameters
+      env:
+        # This is a convenience wrapper that allows the caller to specify the containerfile
+        # either as a full path or simply as an alternate name. If the 'containerfile' input
+        # has a '/' in it then we assume it's a path and provide it as is. If it does not have
+        # a '/' then we assume it's a bare filename and prepend the 'context' input to it to
+        # turn it into a path
+        CONTAINERFILE: ${{ contains(inputs.containerfile, '/') && inputs.containerfile || format('{0}/{1}', inputs.context, inputs.containerfile) }}  # yamllint disable-line rule:line-length
+        REGISTRY: ${{ inputs.registry }}
+        SHA: ${{ github.sha }}
+        BRANCH: ${{ github.ref_name }}
+        TAGS: ${{ inputs.tags }}
+        IS_LATEST: ${{ (github.ref_name == inputs.default-branch && inputs.add-latest-tag-on-default) || '' }}  # yamllint disable rule:line-length
+        ADD_BRANCH_TAGS: ${{ inputs.add-branch-tags || '' }}
+      # yamllint disable rule:line-length
+      run: |
+        echo "containerfile=$CONTAINERFILE" >>$GITHUB_OUTPUT
+        echo "timestamp=$(date --iso-8601=seconds)" >>$GITHUB_OUTPUT
+
+        # These cuts are just slicing and dicing the registry up into its component parts,
+        # mostly for convenient access by later steps without needing to recompute them.
+        # A standard registry URL has the format '<host>/<namespace>/<repository>' which
+        # this block parses out into individual outputs with the corresponding names.
+        echo "registry=$(echo $REGISTRY)" >>$GITHUB_OUTPUT
+        echo "host=$(echo $REGISTRY | cut -d '/' -f 1)" >>$GITHUB_OUTPUT
+        echo "namespace=$(echo $REGISTRY | rev | cut -d '/' -f 2- | rev)" >>$GITHUB_OUTPUT
+        echo "repository=$(echo $REGISTRY | rev | cut -d '/' -f 1 | rev)" >>$GITHUB_OUTPUT
+
+        # Add the commit hash as a tag
+        export TAGS="$TAGS;$SHA"
+
+        # If the conditions are met to set this as the 'latest' image (see conditional in step
+        # env clause) then add that as a tag
+        if [ ! -z "$IS_LATEST" ]; then
+          export TAGS="$TAGS;latest"
+        fi
+
+        # If the caller specified to add branch tags then add them. The branch name needs to
+        # match the proper format for a container registry tag (see here:
+        # https://pkg.go.dev/github.com/distribution/reference#pkg-overview) so if it doesn't
+        # then we need to error out (this is ok since adding these tags is an opt-in behavior,
+        # so the caller should know what they're doing).
+        if [ ! -z "$ADD_BRANCH_TAGS" ]; then
+          if [[ "$BRANCH" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$ ]]; then
+            export TAGS="$TAGS;$BRANCH;$BRANCH-${SHA:0:7}"
+          else
+            echo "ERROR: branch name '$BRANCH' is not a valid container registry tag and 'add-branch-tags' was set to 'true'"
+            exit 1
+          fi
+        fi
+
+        # This pipe is replacing the semicolons in the args input with newlines,
+        # parsing the resulting string as a JSON array, and then dumping that JSON
+        # array back to a serialized string that can be parsed using `fromJSON()` later.
+        echo "tags=$(echo $TAGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
+      # yamllint enable rule:line-length
 
     - name: Build image
       id: build
