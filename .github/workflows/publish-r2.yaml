@@ -5,22 +5,19 @@ on:
   workflow_call:
     inputs:
       path:
-        description: Path to the directory to publish (defaults to "public/").
         type: string
-        default: "public/"
       lfs:
-        description: Whether to clone with git-lfs (defaults to false).
         type: boolean
         default: false
 
     secrets:
-      R2_ACCESS_KEY_ID:
+      TEST_R2_ACCESS_KEY_ID:
         required: true
-      R2_SECRET_ACCESS_KEY:
+      TEST_R2_SECRET_ACCESS_KEY:
         required: true
-      R2_ACCOUNT_ID:
+      TEST_R2_ACCOUNT_ID:
         required: true
-      R2_BUCKET:
+      TEST_R2_BUCKET:
         required: true
 
 jobs:
@@ -31,23 +28,54 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install --yes git git-lfs rclone
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          lfs: ${{ inputs.lfs }}
+          apt-get install --yes git git-lfs curl unzip
+
+          # Install modern rclone (Bookworm version is too old for R2)
+          curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
+          unzip rclone-current-linux-amd64.zip
+          cp rclone-*-linux-amd64/rclone /usr/bin/
+          chmod 755 /usr/bin/rclone
+
+      - name: Create test directory and random file
+        run: |
+          mkdir -p /tmp/publish-r2-test
+          RAND=$(date +%s%N)
+          echo "$RAND" > /tmp/publish-r2-test/expected.txt
+          echo "Generated test payload: $RAND"
+
       - name: Sync to R2
         env:
-          RCLONE_S3_PROVIDER: "Cloudflare"
-          RCLONE_S3_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          RCLONE_S3_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          RCLONE_S3_ENDPOINT: "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
-          BUCKET: ${{ secrets.R2_BUCKET }}
-          PATH_TO_SYNC: ${{ inputs.path }}
+          RCLONE_S3_PROVIDER:         "Cloudflare"
+          RCLONE_S3_ACCESS_KEY_ID:     ${{ secrets.TEST_R2_ACCESS_KEY_ID }}
+          RCLONE_S3_SECRET_ACCESS_KEY: ${{ secrets.TEST_R2_SECRET_ACCESS_KEY }}
+          RCLONE_S3_ENDPOINT:          "https://${{ secrets.TEST_R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          BUCKET:                      ${{ secrets.TEST_R2_BUCKET }}
+          PATH_TO_SYNC:                "/tmp/publish-r2-test"
         run: >-
           rclone sync -v
           --checksum
           --no-update-modtime
           --config="/dev/null"
-          $PATH_TO_SYNC
+          "$PATH_TO_SYNC"
           :s3,env_auth:$BUCKET/
+
+      - name: Verify uploaded file from public R2 URL
+        run: |
+          curl -s \
+            "https://pub-f077643b107046bba3a92b1735727a92.r2.dev/expected.txt" \
+            -o /tmp/actual.txt
+
+          echo "Downloaded payload:"
+          cat /tmp/actual.txt
+
+          echo "Comparing expected vs actual..."
+          if cmp -s /tmp/publish-r2-test/expected.txt /tmp/actual.txt; then
+            echo "SUCCESS: Files match."
+          else
+            echo "ERROR: Files differ!"
+            echo "--- EXPECTED ---"
+            cat /tmp/publish-r2-test/expected.txt
+            echo "--- ACTUAL ---"
+            cat /tmp/actual.txt
+            exit 1
+          fi
