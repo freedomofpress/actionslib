@@ -47,6 +47,7 @@ jobs:
         run: >-
           rclone sync -v
           --checksum
+          --copy-links
           --no-update-modtime
           --config="/dev/null"
           $PATH_TO_SYNC
