@@ -243,9 +243,9 @@ jobs:
         # yamllint disable rule:line-length
         labels: |
           org.opencontainers.image.created=${{ steps.parameters.outputs.timestamp }}
-          press.freedom.metadata.source.repository=${{ github.server_url }}/${{ github.repository }}
-          press.freedom.metadata.source.commit=${{ github.sha }}
-          press.freedom.metadata.source.ref=${{ github.ref_name }}
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.ref.name=${{ github.ref_name }}
           press.freedom.metadata.build.orchestrator=github_actions
           press.freedom.metadata.build.job=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_number }}
           press.freedom.metadata.build.initiator=${{ github.triggering_actor }}
