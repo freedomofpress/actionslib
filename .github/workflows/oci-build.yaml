@@ -137,7 +137,7 @@ on:
         value: ${{ jobs.build.outputs.artifact-image-file-name }}
 jobs:
   build:
-    name: Build
+    name: Publish
     runs-on: ubuntu-latest
     steps:
     # The duplicate 'checkout' jobs here are to handle an annoying detail with the
@@ -278,6 +278,17 @@ jobs:
         # artifact is neither needed nor desirable. That's what registries are for.
         retention-days: 1
 
+    - name: Push image
+      id: push
+      if: ${{ steps.parameters.outputs.host != 'localhost' }}
+      uses: redhat-actions/push-to-registry@v2
+      with:
+        image: ${{ steps.parameters.outputs.registry }}
+        tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
+        registry: ${{ steps.parameters.outputs.host }}
+        username: ${{ secrets.registry-username || github.actor }}
+        password: ${{ secrets.registry-password || secrets.GITHUB_TOKEN }}
+
     outputs:
       digest: ${{ steps.export-image.outputs.digest }}
       url: ${{ format('{0}:{1}', steps.parameters.outputs.registry, github.sha) }}
@@ -288,42 +299,3 @@ jobs:
       push-host: ${{ steps.parameters.outputs.host }}
       push-tags: ${{ steps.parameters.outputs.tags }}
       push-registry: ${{ steps.parameters.outputs.registry }}
-
-  push:
-    name: Push
-    runs-on: ubuntu-latest
-    if: ${{ needs.build.outputs.push-host != 'localhost' }}
-    needs:
-    - build
-    steps:
-    - name: Download image artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ needs.build.outputs.artifact-name }}
-        path: ${{ runner.temp }}
-
-    - name: Load image
-      env:
-        LOAD_PATH: ${{ runner.temp }}/${{ needs.build.outputs.artifact-image-file-name }}
-        LOAD_TAG: ${{ needs.build.outputs.url }}
-        REGISTRY: ${{ needs.build.outputs.push-registry }}
-        TAGS: ${{ join(fromJson(needs.build.outputs.push-tags), ' ') }}
-      run: |
-        podman image load --input "$LOAD_PATH"
-
-        # Saved images only persist the tag they were exported by. So to
-        # ensure that all intended tags get persisted to the remote registry
-        # we need to add them back here
-        for tag in $TAGS; do
-          podman image tag "$LOAD_TAG" "$REGISTRY":"$tag"
-        done
-
-    - name: Push image
-      id: push
-      uses: redhat-actions/push-to-registry@v2
-      with:
-        image: ${{ needs.build.outputs.push-registry }}
-        tags: ${{ join(fromJson(needs.build.outputs.push-tags), ' ') }}
-        registry: ${{ needs.build.outputs.push-host }}
-        username: ${{ secrets.registry-username || github.actor }}
-        password: ${{ secrets.registry-password || secrets.GITHUB_TOKEN }}
