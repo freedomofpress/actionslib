@@ -1,0 +1,75 @@
+---
+name: Test publish-r2 flow
+
+on:
+  workflow_dispatch:
+  push:
+    # Only trigger when pushing to the 'main' branch
+    # AND only if this specific workflow file changes.
+    branches:
+      - main
+    paths:
+      - '.github/workflows/publish-r2.yaml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: debian:bookworm
+    steps:
+      - name: Create test directory and random file
+        run: |
+          mkdir -p /tmp/publish-r2-test
+          RAND=$(date +%s%N)
+          echo "$RAND" > /tmp/publish-r2-test/expected.txt
+          echo "Generated test payload: $RAND"
+
+      # Make the generated expected.txt available to later jobs
+      - name: Upload expected file
+        uses: actions/upload-artifact@v4
+        with:
+          name: expected-file
+          path: /tmp/publish-r2-test/expected.txt
+
+  publish:
+    uses: freedomofpress/actionslib/.github/workflows/publish-r2.yaml@main
+    needs: test
+    with:
+      path: /tmp/publish-r2-test/
+    secrets:
+      R2_ACCESS_KEY_ID: ${{ secrets.TEST_R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.TEST_R2_SECRET_ACCESS_KEY }}
+      R2_ACCOUNT_ID: ${{ secrets.TEST_R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.TEST_R2_BUCKET }}
+
+  verify:
+    runs-on: ubuntu-latest
+    container: debian:bookworm
+    needs: publish
+    steps:
+      # Retrieve expected.txt created in the test job
+      - name: Download expected file
+        uses: actions/download-artifact@v4
+        with:
+          name: expected-file
+          path: /tmp/publish-r2-test/
+
+      - name: Verify uploaded file from public R2 URL
+        run: |
+          curl -s \
+            "https://pub-f077643b107046bba3a92b1735727a92.r2.dev/expected.txt" \
+            -o /tmp/actual.txt
+
+          echo "Downloaded payload:"
+          cat /tmp/actual.txt
+
+          echo "Comparing expected vs actual..."
+          if cmp -s /tmp/publish-r2-test/expected.txt /tmp/actual.txt; then
+            echo "SUCCESS: Files match."
+          else
+            echo "ERROR: Files differ!"
+            echo "--- EXPECTED ---"
+            cat /tmp/publish-r2-test/expected.txt
+            echo "--- ACTUAL ---"
+            cat /tmp/actual.txt
+            exit 1
+          fi
