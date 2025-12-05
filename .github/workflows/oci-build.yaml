@@ -69,12 +69,6 @@ on:
         type: string
         default: ""
 
-      default-branch:
-        description: >-
-          The repository's default branch. Used for determining whether to add the 'latest' tag
-        type: string
-        default: main
-
       add-latest-tag-on-default:
         description: >-
           Whether to add the 'latest' tag to the built image when the current ref is the default
@@ -186,8 +180,9 @@ jobs:
         REGISTRY: ${{ inputs.registry }}
         SHA: ${{ github.sha }}
         BRANCH: ${{ github.ref_name }}
+        REPOSITORY: ${{ github.repository }}
         TAGS: ${{ inputs.tags }}
-        IS_LATEST: ${{ (github.ref_name == inputs.default-branch && inputs.add-latest-tag-on-default) || '' }}  # yamllint disable rule:line-length
+        ADD_LATEST: ${{ inputs.add-latest-tag-on-default || '' }}
         ADD_BRANCH_TAGS: ${{ inputs.add-branch-tags || '' }}
       # yamllint disable rule:line-length
       run: |
@@ -206,9 +201,11 @@ jobs:
         # Add the commit hash as a tag
         export TAGS="$TAGS;$SHA"
 
-        # If the conditions are met to set this as the 'latest' image (see conditional in step
-        # env clause) then add that as a tag
-        if [ ! -z "$IS_LATEST" ]; then
+        # Fetch the default branch using the github api. If the user enabled the 'add latest
+        # when on the default branch' functionality, then add the 'latest' tag to the list
+        # of tags to be applied
+        export DEFAULT_BRANCH=$(gh api "/repos/$REPOSITORY" | jq -r '.default_branch')
+        if [ "$DEFAULT_BRANCH" = "$BRANCH" ] && [ ! -z "$ADD_LATEST" ]; then
           export TAGS="$TAGS;latest"
         fi
 
