@@ -32,10 +32,15 @@ on:
       R2_BUCKET:
         required: true
 
+permissions: {}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     container: debian:bookworm
+    permissions:
+      contents: read
+      actions: read
     steps:
       - name: Install dependencies
         run: |
