@@ -13,6 +13,15 @@ on:
         type: boolean
         default: false
 
+      artifact_name:
+        description: Optional artifact name to download before syncing.
+        type: string
+        default: ""
+      artifact_path:
+        description: Optional destination directory for the artifact (defaults to inputs.path).
+        type: string
+        default: ""
+
     secrets:
       R2_ACCESS_KEY_ID:
         required: true
@@ -36,6 +45,14 @@ jobs:
         with:
           persist-credentials: false
           lfs: ${{ inputs.lfs }}
+
+      - name: Download artifact payload (optional)
+        if: ${{ inputs.artifact_name != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ${{ inputs.artifact_path || inputs.path }}
+
       - name: Sync to R2
         env:
           RCLONE_S3_PROVIDER: "Cloudflare"
