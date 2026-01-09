@@ -6,13 +6,13 @@ on:
   pull_request:
     types: ["opened", "synchronize"]
     paths:
-      - '.github/workflows/test-publish-r2.yaml'
+      - '.github/workflows/_test_publish_r2.yaml'
       - '.github/workflows/publish-r2.yaml'
   push:
     branches:
       - main
     paths:
-      - '.github/workflows/test-publish-r2.yaml'
+      - '.github/workflows/_test_publish_r2.yaml'
       - '.github/workflows/publish-r2.yaml'
 
 permissions: {}
