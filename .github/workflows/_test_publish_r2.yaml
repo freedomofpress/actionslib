@@ -1,0 +1,92 @@
+---
+name: Test publish-r2 flow
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: ["opened", "synchronize"]
+    paths:
+      - '.github/workflows/_test_publish_r2.yaml'
+      - '.github/workflows/publish-r2.yaml'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/_test_publish_r2.yaml'
+      - '.github/workflows/publish-r2.yaml'
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: debian:bookworm
+    permissions: {}
+    steps:
+      - name: Create test directory and random file (in workspace)
+        run: |
+          mkdir -p publish-r2-test
+          RAND=$(date +%s%N)
+          echo "$RAND" > publish-r2-test/expected.txt
+          echo "Generated test payload: $RAND"
+
+      - name: Upload payload directory for publish job
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-r2-payload
+          path: publish-r2-test/
+
+  publish:
+    uses: freedomofpress/actionslib/.github/workflows/publish-r2.yaml@main
+    needs: test
+    permissions:
+      contents: read
+      actions: read
+    with:
+      path: publish-r2-test/
+      artifact_name: publish-r2-payload
+      artifact_path: publish-r2-test/
+    secrets:
+      R2_ACCESS_KEY_ID: ${{ secrets.TEST_R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.TEST_R2_SECRET_ACCESS_KEY }}
+      R2_ACCOUNT_ID: ${{ secrets.TEST_R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.TEST_R2_BUCKET }}
+
+  verify:
+    runs-on: ubuntu-latest
+    container: debian:bookworm
+    needs: publish
+    permissions:
+      actions: read
+    steps:
+      - name: Install curl (Debian base image usually lacks it)
+        run: |
+          apt-get update
+          apt-get install --yes curl
+
+      - name: Download expected payload directory
+        uses: actions/download-artifact@v4
+        with:
+          name: publish-r2-payload
+          path: publish-r2-test/
+
+      - name: Verify uploaded file from public R2 URL
+        run: |
+          curl -s \
+            "https://pub-f077643b107046bba3a92b1735727a92.r2.dev/expected.txt" \
+            -o actual.txt
+
+          echo "Downloaded payload:"
+          cat actual.txt
+
+          echo "Comparing expected vs actual..."
+          if cmp -s publish-r2-test/expected.txt actual.txt; then
+            echo "SUCCESS: Files match."
+          else
+            echo "ERROR: Files differ!"
+            echo "--- EXPECTED ---"
+            cat publish-r2-test/expected.txt
+            echo "--- ACTUAL ---"
+            cat actual.txt
+            exit 1
+          fi
