@@ -8,6 +8,10 @@ on:
         description: Path to the directory to publish (defaults to "public/").
         type: string
         default: "public/"
+      target_dir:
+        description: Push to a directory in the target bucket.
+        type: string
+        default: ""
       lfs:
         description: Whether to clone with git-lfs (defaults to false).
         type: boolean
@@ -66,10 +70,11 @@ jobs:
           RCLONE_S3_ENDPOINT: "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
           BUCKET: ${{ secrets.R2_BUCKET }}
           PATH_TO_SYNC: ${{ inputs.path }}
+          TARGET_DIR: ${{ inputs.target_dir }}
         run: >-
           rclone sync -v
           --checksum
           --no-update-modtime
           --config="/dev/null"
           $PATH_TO_SYNC
-          :s3,env_auth:$BUCKET/
+          :s3,env_auth:$BUCKET/$TARGET_DIR/
