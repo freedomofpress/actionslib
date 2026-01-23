@@ -4,14 +4,30 @@ name: FPF/Signed-Commit-GPG
 description: Create a GPG-signed commit modifying one or more files
 
 inputs:
+  files:
+    description: List of files to stage & commit
+    required: true
+
+  gpg-key:
+    description: Base64 encoded GPG key to use for signing the commit
+    required: true
+
+  gpg-email:
+    description: >-
+      Email address to sign the commit as. Must be an address associated
+      with the key passed to `gpg-key`
+    required: true
+
+  gpg-identity:
+    description: >-
+      Username to sign the commit as. Must be a name associated with the
+      key passed to `gpg-key`
+    required: true
+
   create-branch:
     description: "If set, the action will create/switch to this branch before committing"
     required: false
     default: ""
-
-  files:
-    description: List of files to stage & commit
-    required: true
 
   message:
     description: Commit message
@@ -34,23 +50,30 @@ outputs:
     value: ${{ steps.commit.outputs.sha }}
   commit-url:
     description: URL of the commit on GitHub
-    value: https://github.com/${{ inputs.repo || github.repository }}/commit/${{ steps.commit.outputs.sha }}  # yamllint disable rule:line-length
+    value: ${{ github.server_url }}/${{ inputs.repo || github.repository }}/commit/${{ steps.commit.outputs.sha }}  # yamllint disable rule:line-length
 
 runs:
   using: composite
   steps:
+    - name: Validate required inputs
+      shell: bash
+      env:
+        INPUT_FILES: ${{ inputs.files }}
+        INPUT_GPG_KEY: ${{ inputs.gpg-key }}
+        INPUT_GPG_EMAIL: ${{ inputs.gpg-email }}
+        INPUT_GPG_IDENTITY: ${{ inputs.gpg-identity }}
+      run: |
+        [[ "$INPUT_FILES" ]] || { echo "Required input 'files' was not provided" ; exit 1; }
+        [[ "$INPUT_GPG_KEY" ]] || { echo "Required input 'gpg-key' was not provided" ; exit 1; }
+        [[ "$INPUT_GPG_EMAIL" ]] || { echo "Required input 'gpg-email' was not provided" ; exit 1; }
+        [[ "$INPUT_GPG_IDENTITY" ]] || { echo "Required input 'gpg-identity' was not provided" ; exit 1; }
 
     - name: Import PGP key
       id: import-gpg
       shell: bash
       env:
-        PGP_KEY_B64: ${{ secrets.FPF_BRANCH_UPDATER_PGP_KEY }}
+        PGP_KEY_B64: ${{ inputs.gpg-key }}
       run: |
-        if [[ -z "$PGP_KEY_B64" ]]; then
-          echo "Missing required secret: FPF_BRANCH_UPDATER_PGP_KEY"
-          exit 1
-        fi
-
         echo "$PGP_KEY_B64" | base64 --decode | gpg --import
 
         KEY_ID=$(
@@ -77,8 +100,8 @@ runs:
       shell: bash
       working-directory: ${{ inputs.repo-path }}
       env:
-        GIT_EMAIL: ${{ vars.FPF_BRANCH_UPDATER_PGP_EMAIL }}
-        GIT_NAME: ${{ vars.FPF_BRANCH_UPDATER_PGP_IDENTITY }}
+        GIT_EMAIL: ${{ inputs.gpg-email }}
+        GIT_NAME: ${{ inputs.gpg-identity }}
         GPG_KEY_ID: ${{ steps.import-gpg.outputs.key-id }}
       run: |
         git config user.email "$GIT_EMAIL"
