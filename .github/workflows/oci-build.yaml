@@ -4,9 +4,26 @@ name: Build OCI Image
 on:
   workflow_call:
     inputs:
+      build-mode:
+        description: >-
+          How to obtain the image. 'containerfile' builds from a Containerfile using buildah,
+          'prebuilt' expects a tarball at the path specified by ``prebuilt-image-path`` (e.g.,
+          from ``nix build``). Defaults to 'containerfile' for backwards compatibility.
+        type: string
+        default: "containerfile"
+
+      prebuilt-image-path:
+        description: >-
+          Path to a pre-built OCI image tarball to load (e.g., the ``result`` symlink from
+          ``nix build``). The tarball must be loadable via ``podman load``. Only used when
+          ``build-mode`` is 'prebuilt'.
+        type: string
+        default: "result"
+
       context:
         description: >-
-          Path to the build context for the image
+          Path to the build context for the image. Only used when ``build-mode`` is
+          'containerfile'.
         type: string
         default: '.'
 
@@ -14,14 +31,16 @@ on:
         description: >-
           Path to the container image specification file (i.e. Containerfile, Dockerfile) to use
           for the image build. A full path can be specified, but if only a filename is specified
-          then that filename will be looked for at the path specified by ``context``.
+          then that filename will be looked for at the path specified by ``context``. Only used
+          when ``build-mode`` is 'containerfile'.
         type: string
         default: 'Containerfile'
 
       build-args:
         description: >-
           Build arguments to pass into the build operation. Arguments are provided in
-          ``key=value`` format, with different arguments separated by newlines (``\n``).
+          ``key=value`` format, with different arguments separated by newlines (``\n``). Only
+          used when ``build-mode`` is 'containerfile'.
         type: string
         default: ''
 
@@ -256,6 +275,7 @@ jobs:
     - name: Build image
       id: build
       uses: redhat-actions/buildah-build@061ffd31bb5c3f8733a6f9bbdf00a9fb02eb708c
+      if: ${{ inputs.build-mode == 'containerfile' }}
       with:
         context: ${{ inputs.context }}
         containerfiles: |
@@ -276,6 +296,40 @@ jobs:
           press.freedom.metadata.build.workflow=${{ github.server_url }}/${{ github.workflow_ref }}
           press.freedom.metadata.build.workflow-sha=${{ github.workflow_sha }}
         # yamllint enable rule: line-length
+
+    - name: Load prebuilt image
+      id: load-prebuilt
+      if: ${{ inputs.build-mode == 'prebuilt' }}
+      env:
+        PREBUILT_PATH: ${{ inputs.prebuilt-image-path }}
+        TARGET_IMAGE: ${{ format('{0}:{1}', steps.parameters.outputs.registry, github.sha) }}
+        TAGS_JSON: ${{ steps.parameters.outputs.tags }}
+        REGISTRY: ${{ steps.parameters.outputs.registry }}
+      # yamllint disable rule:line-length
+      run: |
+        # Load the prebuilt image tarball and capture the loaded image reference
+        echo "Loading prebuilt image from: $PREBUILT_PATH"
+        LOAD_OUTPUT=$(podman load < "$PREBUILT_PATH")
+        echo "$LOAD_OUTPUT"
+
+        # Extract the loaded image reference from podman load output
+        # Output format is typically: "Loaded image: <image>:<tag>" or "Loaded image(s): <image>:<tag>"
+        LOADED_IMAGE=$(echo "$LOAD_OUTPUT" | grep -oP 'Loaded image[s]?: \K.*' | head -1)
+        if [ -z "$LOADED_IMAGE" ]; then
+          echo "ERROR: Failed to determine loaded image reference from podman load output"
+          exit 1
+        fi
+        echo "Loaded image reference: $LOADED_IMAGE"
+
+        # Tag the loaded image with all computed tags
+        echo "Applying tags to image..."
+        for TAG in $(echo "$TAGS_JSON" | jq -r '.[]'); do
+          echo "  Tagging as: $REGISTRY:$TAG"
+          podman tag "$LOADED_IMAGE" "$REGISTRY:$TAG"
+        done
+
+        echo "loaded-image=$LOADED_IMAGE" >>$GITHUB_OUTPUT
+      # yamllint enable rule:line-length
 
     - name: Export image
       id: export-image
