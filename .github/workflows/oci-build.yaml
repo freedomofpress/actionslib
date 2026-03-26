@@ -72,7 +72,7 @@ on:
       add-latest-tag-on-default:
         description: >-
           Whether to add the 'latest' tag to the built image when the current ref is the default
-          branch (as specified by the ``default-branch`` input)
+          branch
         type: boolean
         default: true
 
@@ -94,7 +94,7 @@ on:
         required: false
       registry-password:
         description: >-
-          The passwrd for authenticating to the remote image registry. Uses `GITHUB_TOKEN`
+          The password for authenticating to the remote image registry. Uses `GITHUB_TOKEN`
           by default. If `inputs.registry` is not specified or specifies a localhost registry
           then this value is not used.
         required: false
