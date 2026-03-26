@@ -72,7 +72,7 @@ on:
       add-latest-tag-on-default:
         description: >-
           Whether to add the 'latest' tag to the built image when the current ref is the default
-          branch (as specified by the ``default-branch`` input)
+          branch
         type: boolean
         default: true
 
@@ -86,6 +86,11 @@ on:
         default: false
 
     secrets:
+      github-token:
+        description: >-
+          The API token used to authenticate Github. Only requires read access to the repository
+          config to determine the default branch.
+        required: false
       registry-username:
         description: >-
           The username for authenticating to the remote image registry. Uses `github.actor`
@@ -94,7 +99,7 @@ on:
         required: false
       registry-password:
         description: >-
-          The passwrd for authenticating to the remote image registry. Uses `GITHUB_TOKEN`
+          The password for authenticating to the remote image registry. Uses `GITHUB_TOKEN`
           by default. If `inputs.registry` is not specified or specifies a localhost registry
           then this value is not used.
         required: false
@@ -150,7 +155,7 @@ jobs:
     # checkout jobs: one that specifies a default ref (if provided) and one that doesn't
     # so that we can piggy back on the actions/checkout default ref determination logic
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       if: ${{ ! inputs.build-ref }}
       with:
         persist-credentials: false
@@ -159,7 +164,7 @@ jobs:
         lfs: ${{ inputs.requires-lfs }}
 
     - name: Checkout Ref
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       if: ${{ inputs.build-ref }}
       with:
         ref: ${{ inputs.build-ref }}
@@ -184,6 +189,7 @@ jobs:
         TAGS: ${{ inputs.tags }}
         ADD_LATEST: ${{ inputs.add-latest-tag-on-default || '' }}
         ADD_BRANCH_TAGS: ${{ inputs.add-branch-tags || '' }}
+        GH_TOKEN: ${{ secrets.github-token }}
       # yamllint disable rule:line-length
       run: |
         echo "containerfile=$CONTAINERFILE" >>$GITHUB_OUTPUT
@@ -204,7 +210,13 @@ jobs:
         # Fetch the default branch using the github api. If the user enabled the 'add latest
         # when on the default branch' functionality, then add the 'latest' tag to the list
         # of tags to be applied
-        export DEFAULT_BRANCH=$(gh api "/repos/$REPOSITORY" | jq -r '.default_branch')
+        if [ ! -z "$GH_TOKEN" ]; then
+          export DEFAULT_BRANCH=$(gh api "/repos/$REPOSITORY" | jq -r '.default_branch')
+        else
+          echo "WARNING: No Github API token provided, dynamic determination of the default branch is not available.
+                Falling back to assuming the default branch is 'main'"
+          export DEFAULT_BRANCH='main'
+        fi
         if [ "$DEFAULT_BRANCH" = "$BRANCH" ] && [ ! -z "$ADD_LATEST" ]; then
           export TAGS="$TAGS;latest"
         fi
@@ -267,7 +279,7 @@ jobs:
 
     - name: Upload image artifact
       id: upload-artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.parameters.outputs.repository }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
         path: ${{ steps.export-image.outputs.export-file }}
