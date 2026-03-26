@@ -86,6 +86,11 @@ on:
         default: false
 
     secrets:
+      github-token:
+        description: >-
+          The API token used to authenticate Github. Only requires read access to the repository
+          config to determine the default branch.
+        required: false
       registry-username:
         description: >-
           The username for authenticating to the remote image registry. Uses `github.actor`
@@ -184,6 +189,7 @@ jobs:
         TAGS: ${{ inputs.tags }}
         ADD_LATEST: ${{ inputs.add-latest-tag-on-default || '' }}
         ADD_BRANCH_TAGS: ${{ inputs.add-branch-tags || '' }}
+        GH_TOKEN: ${{ secrets.github-token }}
       # yamllint disable rule:line-length
       run: |
         echo "containerfile=$CONTAINERFILE" >>$GITHUB_OUTPUT
@@ -204,7 +210,13 @@ jobs:
         # Fetch the default branch using the github api. If the user enabled the 'add latest
         # when on the default branch' functionality, then add the 'latest' tag to the list
         # of tags to be applied
-        export DEFAULT_BRANCH=$(gh api "/repos/$REPOSITORY" | jq -r '.default_branch')
+        if [ ! -z "$GH_TOKEN" ]; then
+          export DEFAULT_BRANCH=$(gh api "/repos/$REPOSITORY" | jq -r '.default_branch')
+        else
+          echo "WARNING: No Github API token provided, dynamic determination of the default branch is not available.
+                Falling back to assuming the default branch is 'main'"
+          export DEFAULT_BRANCH='main'
+        fi
         if [ "$DEFAULT_BRANCH" = "$BRANCH" ] && [ ! -z "$ADD_LATEST" ]; then
           export TAGS="$TAGS;latest"
         fi
