@@ -24,24 +24,24 @@ Make a change to a file and commit the changes to a new branch:
 
 ```yaml
 steps:
-- name: Checkout
-  uses: actions/checkout@v4
+  - name: Checkout
+    uses: actions/checkout@v4
 
-- name: Create a new branch and make That change
-  run: |
-    git checkout -B that-new-branch
-    git push --set-upstream origin that-new-branch
+  - name: Create a new branch and make That change
+    run: |
+      git checkout -B that-new-branch
+      git push --set-upstream origin that-new-branch
 
-    sed -i 's/This/That' README.md
+      sed -i 's/This/That' README.md
 
-- name: Commit That change
-  uses: freedomofpress/actionslib/act/signed-commit@main
-  with:
-    file: README.md
-    branch: that-new-branch
-    message: |
-      This is a cool new commit that will fix all the problems
+  - name: Commit That change
+    uses: freedomofpress/actionslib/act/signed-commit@main
+    with:
+      file: README.md
+      branch: that-new-branch
+      message: |
+        This is a cool new commit that will fix all the problems
 
-      For more info on this change see the docs here: https://xkcd.com/1597/
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+        For more info on this change see the docs here: https://xkcd.com/1597/
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 ```

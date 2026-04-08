@@ -9,25 +9,25 @@ on:
     inputs:
       path:
         description: >-
-         Path to the directory or workflow file to lint. Defaults to the root
-         of the repo which will detect the default Actions workflow location
-         at '.github/workflows/'
+          Path to the directory or workflow file to lint. Defaults to the root
+          of the repo which will detect the default Actions workflow location
+          at '.github/workflows/'
         type: string
-        default: "."
+        default: '.'
 
       # Zizmor has no dependencies so there's no need to use a lockfile
       zizmor-version:
         description: Version of Zizmor to install
         type: string
-        default: "1.16.0"
+        default: '1.16.0'
 
       zizmor-options:
         description: Additional CLI options to pass to the Zizmor command.
         type: string
-        default: "--min-severity=medium"
+        default: '--min-severity=medium'
 
 env:
-  PYTHON_VERSION: "3.12"
+  PYTHON_VERSION: '3.12'
   ZIZMOR_DEFAULT_CONFIG: |
     ---
     rules:
@@ -46,33 +46,33 @@ jobs:
     name: Lint:Actions
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        persist-credentials: false
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install zizmor
-      run: python -m pip install "zizmor==$ZIZMOR_VERSION"
-      env:
-        ZIZMOR_VERSION: ${{ inputs.zizmor-version }}
+      - name: Install zizmor
+        run: python -m pip install "zizmor==$ZIZMOR_VERSION"
+        env:
+          ZIZMOR_VERSION: ${{ inputs.zizmor-version }}
 
-    - name: Configure zizmor
-      run: |
-        # If the repository specifies its own config then we should
-        # respect that
-        if [ ! -f .github/zizmor.yml ]; then
-          echo "${ZIZMOR_DEFAULT_CONFIG}" >>.github/zizmor.yml
-        fi
+      - name: Configure zizmor
+        run: |
+          # If the repository specifies its own config then we should
+          # respect that
+          if [ ! -f .github/zizmor.yml ]; then
+            echo "${ZIZMOR_DEFAULT_CONFIG}" >>.github/zizmor.yml
+          fi
 
-    - name: Lint
-      run: zizmor "$ZIZMOR_PATH" $ZIZMOR_OPTIONS
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        ZIZMOR_PATH: ${{ inputs.path }}
-        ZIZMOR_OPTIONS: ${{ inputs.zizmor-options }}
+      - name: Lint
+        run: zizmor "$ZIZMOR_PATH" $ZIZMOR_OPTIONS
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ZIZMOR_PATH: ${{ inputs.path }}
+          ZIZMOR_OPTIONS: ${{ inputs.zizmor-options }}

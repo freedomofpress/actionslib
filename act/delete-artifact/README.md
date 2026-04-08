@@ -19,36 +19,36 @@ jobs:
   setup:
     name: Setup
     steps:
-    - name: Create artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: my-very-cool-artifact
-        path: |
-          ./path/to/some/blob.data
-          ./path/to/some/glob.json
-          ./path/to/some/bucket.zip
-        retention-days: 1
+      - name: Create artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-very-cool-artifact
+          path: |
+            ./path/to/some/blob.data
+            ./path/to/some/glob.json
+            ./path/to/some/bucket.zip
+          retention-days: 1
 
   process:
     name: Process
     needs: setup
     steps:
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: my-very-cool-artifact
-        path: ./path/to/local/data
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: my-very-cool-artifact
+          path: ./path/to/local/data
 
   cleanup:
     name: Cleanup
     needs:
-    - setup
-    - process
-    if: ${{ always() }}  # ensures cleanup always runs, even if 'process' fails
+      - setup
+      - process
+    if: ${{ always() }} # ensures cleanup always runs, even if 'process' fails
     steps:
-    - name: Delete artifact
-      uses: freedomofpress/actionslib/act/delete-artifact@main
-      with:
-        name: my-very-cool-artifact
-        error-if-absent: false
+      - name: Delete artifact
+        uses: freedomofpress/actionslib/act/delete-artifact@main
+        with:
+          name: my-very-cool-artifact
+          error-if-absent: false
 ```
