@@ -20,7 +20,7 @@ jobs:
     name: Setup
     steps:
       - name: Create artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: my-very-cool-artifact
           path: |
