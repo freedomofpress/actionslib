@@ -47,7 +47,7 @@ jobs:
             command: "find . -not \\( -path ./.git -prune \\) -not \\( -path ./.venv -prune \\) -type f -exec file {} + | awk -F: '/shell script/{print $1}' | xargs -r shellcheck" # yamllint disable-line rule:line-length
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 

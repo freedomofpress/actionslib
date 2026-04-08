@@ -25,7 +25,7 @@ Make a change to a file and commit the changes to a new branch:
 ```yaml
 steps:
   - name: Checkout
-    uses: actions/checkout@v4
+    uses: actions/checkout@v6
 
   - name: Create a new branch and make That change
     run: |
