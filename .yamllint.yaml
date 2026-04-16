@@ -8,3 +8,5 @@ rules:
     indent-sequences: consistent
   line-length:
     max: 100
+  comments:
+    min-spaces-from-content: 1
