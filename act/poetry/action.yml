@@ -60,6 +60,7 @@ runs:
     shell: bash
     env:
       POETRY_REQUIREMENTS: ${{ inputs.poetry-requirements || format('{0}/requirements-poetry.txt', github.action_path) }}  # yamllint disable-line rule:line-length
+    # yamllint disable rule:line-length
     run: |
       mkdir --parents ~/.local/share/poetry-runtime
       which python
@@ -73,6 +74,7 @@ runs:
       echo "Successfully installed $(~/.local/share/poetry-runtime/bin/poetry --version --no-color)"
       echo "~/.local/share/poetry-runtime/bin" >> $GITHUB_PATH
       ~/.local/share/poetry-runtime/bin/python --version
+    # yamllint enable rule:line-length
 
   - name: Install Poetry groups
     shell: bash
