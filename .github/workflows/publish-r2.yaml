@@ -50,7 +50,7 @@ jobs:
         run: |
           apt-get update
           apt-get install --yes git git-lfs rclone
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
           lfs: ${{ inputs.lfs }}
