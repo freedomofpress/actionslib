@@ -7,11 +7,11 @@ on:
       path:
         description: Path to the directory to publish (defaults to "public/").
         type: string
-        default: "public/"
+        default: 'public/'
       target_dir:
         description: Push to a directory in the target bucket.
         type: string
-        default: ""
+        default: ''
       lfs:
         description: Whether to clone with git-lfs (defaults to false).
         type: boolean
@@ -20,11 +20,11 @@ on:
       artifact_name:
         description: Optional artifact name to download before syncing.
         type: string
-        default: ""
+        default: ''
       artifact_path:
         description: Optional destination directory for the artifact (defaults to inputs.path).
         type: string
-        default: ""
+        default: ''
 
     secrets:
       R2_ACCESS_KEY_ID:
@@ -64,10 +64,10 @@ jobs:
 
       - name: Sync to R2
         env:
-          RCLONE_S3_PROVIDER: "Cloudflare"
+          RCLONE_S3_PROVIDER: 'Cloudflare'
           RCLONE_S3_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           RCLONE_S3_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          RCLONE_S3_ENDPOINT: "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          RCLONE_S3_ENDPOINT: 'https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com'
           BUCKET: ${{ secrets.R2_BUCKET }}
           PATH_TO_SYNC: ${{ inputs.path }}
           TARGET_DIR: ${{ inputs.target_dir }}

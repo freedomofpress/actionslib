@@ -1,5 +1,4 @@
 ---
-
 name: FPF/Signed-Commit-GPG
 description: Create a GPG-signed commit modifying one or more files
 
@@ -25,9 +24,9 @@ inputs:
     required: true
 
   create-branch:
-    description: "If set, the action will create/switch to this branch before committing"
+    description: 'If set, the action will create/switch to this branch before committing'
     required: false
-    default: ""
+    default: ''
 
   push:
     description: Whether to push the new commit to the Git remote
@@ -37,17 +36,17 @@ inputs:
   message:
     description: Commit message
     required: false
-    default: "Automatic commit"
+    default: 'Automatic commit'
 
   repo:
     description: Repository to commit to in owner/name format; defaults to current repo
     required: false
-    default: ""
+    default: ''
 
   repo-path:
     description: Path to the local clone of the repository
     required: false
-    default: "."
+    default: '.'
 
 outputs:
   commit-sha:
@@ -55,7 +54,7 @@ outputs:
     value: ${{ steps.commit.outputs.sha }}
   commit-url:
     description: URL of the commit on GitHub
-    value: ${{ github.server_url }}/${{ inputs.repo || github.repository }}/commit/${{ steps.commit.outputs.sha }}  # yamllint disable rule:line-length
+    value: ${{ github.server_url }}/${{ inputs.repo || github.repository }}/commit/${{ steps.commit.outputs.sha }} # yamllint disable rule:line-length
 
 runs:
   using: composite

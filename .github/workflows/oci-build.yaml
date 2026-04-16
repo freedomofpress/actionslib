@@ -8,7 +8,7 @@ on:
         description: >-
           Path to the build context for the image
         type: string
-        default: "."
+        default: '.'
 
       containerfile:
         description: >-
@@ -16,20 +16,20 @@ on:
           for the image build. A full path can be specified, but if only a filename is specified
           then that filename will be looked for at the path specified by ``context``.
         type: string
-        default: "Containerfile"
+        default: 'Containerfile'
 
       build-args:
         description: >-
           Build arguments to pass into the build operation. Arguments are provided in
           ``key=value`` format, with different arguments separated by newlines (``\n``).
         type: string
-        default: ""
+        default: ''
 
       build-ref:
         description: >-
           Repository ref to build the image from. Defaults to the current job reference
         type: string
-        default: ""
+        default: ''
 
       requires-submodules:
         description: >-
@@ -59,7 +59,7 @@ on:
           ``<host>/<namespace>/<repository>`` format. If not provided, then the image will not be
           pushed to any registry.
         type: string
-        default: "localhost/${{ github.repository }}"
+        default: 'localhost/${{ github.repository }}'
 
       tags:
         description: >-
@@ -67,7 +67,7 @@ on:
           separated by semicolons (``;``). All images will be assigned a tag corresponding to the
           git commit SHA that triggered the build.
         type: string
-        default: ""
+        default: ''
 
       add-latest-tag-on-default:
         description: >-
@@ -145,161 +145,161 @@ jobs:
     name: Publish
     runs-on: ubuntu-latest
     steps:
-    # The duplicate 'checkout' jobs here are to handle an annoying detail with the
-    # actions/checkout action. The action allows a 'ref' to be specified to checkout
-    # a specific ref, but the logic for determining the default ref is extremely complicated
-    # and not able to be easily reimplemented here. So the obvious way to do this would be
-    # something like "ref: ${{ inputs.build-ref || default }}" but there's no easy way to
-    # determine that "default" value without having serious regressions compared to the
-    # actions/checkout builtin default determination logic. So, we have two different
-    # checkout jobs: one that specifies a default ref (if provided) and one that doesn't
-    # so that we can piggy back on the actions/checkout default ref determination logic
-    - name: Checkout
-      uses: actions/checkout@v6
-      if: ${{ ! inputs.build-ref }}
-      with:
-        persist-credentials: false
-        submodules: ${{ inputs.requires-submodules && 'recursive' || 'false' }}
-        fetch-depth: ${{ inputs.requires-deep-history && '0' || '1' }}
-        lfs: ${{ inputs.requires-lfs }}
+      # The duplicate 'checkout' jobs here are to handle an annoying detail with the
+      # actions/checkout action. The action allows a 'ref' to be specified to checkout
+      # a specific ref, but the logic for determining the default ref is extremely complicated
+      # and not able to be easily reimplemented here. So the obvious way to do this would be
+      # something like "ref: ${{ inputs.build-ref || default }}" but there's no easy way to
+      # determine that "default" value without having serious regressions compared to the
+      # actions/checkout builtin default determination logic. So, we have two different
+      # checkout jobs: one that specifies a default ref (if provided) and one that doesn't
+      # so that we can piggy back on the actions/checkout default ref determination logic
+      - name: Checkout
+        uses: actions/checkout@v6
+        if: ${{ ! inputs.build-ref }}
+        with:
+          persist-credentials: false
+          submodules: ${{ inputs.requires-submodules && 'recursive' || 'false' }}
+          fetch-depth: ${{ inputs.requires-deep-history && '0' || '1' }}
+          lfs: ${{ inputs.requires-lfs }}
 
-    - name: Checkout Ref
-      uses: actions/checkout@v6
-      if: ${{ inputs.build-ref }}
-      with:
-        ref: ${{ inputs.build-ref }}
-        persist-credentials: false
-        submodules: ${{ inputs.requires-submodules && 'recursive' || 'false' }}
-        fetch-depth: ${{ inputs.requires-deep-history && '0' || '1' }}
-        lfs: ${{ inputs.requires-lfs }}
+      - name: Checkout Ref
+        uses: actions/checkout@v6
+        if: ${{ inputs.build-ref }}
+        with:
+          ref: ${{ inputs.build-ref }}
+          persist-credentials: false
+          submodules: ${{ inputs.requires-submodules && 'recursive' || 'false' }}
+          fetch-depth: ${{ inputs.requires-deep-history && '0' || '1' }}
+          lfs: ${{ inputs.requires-lfs }}
 
-    - name: Set build parameters
-      id: parameters
-      env:
-        # This is a convenience wrapper that allows the caller to specify the containerfile
-        # either as a full path or simply as an alternate name. If the 'containerfile' input
-        # has a '/' in it then we assume it's a path and provide it as is. If it does not have
-        # a '/' then we assume it's a bare filename and prepend the 'context' input to it to
-        # turn it into a path
-        CONTAINERFILE: ${{ contains(inputs.containerfile, '/') && inputs.containerfile || format('{0}/{1}', inputs.context, inputs.containerfile) }}  # yamllint disable-line rule:line-length
-        REGISTRY: ${{ inputs.registry }}
-        SHA: ${{ github.sha }}
-        BRANCH: ${{ github.ref_name }}
-        REPOSITORY: ${{ github.repository }}
-        TAGS: ${{ inputs.tags }}
-        ADD_LATEST: ${{ inputs.add-latest-tag-on-default || '' }}
-        ADD_BRANCH_TAGS: ${{ inputs.add-branch-tags || '' }}
-        GH_TOKEN: ${{ secrets.github-token }}
-      # yamllint disable rule:line-length
-      run: |
-        echo "containerfile=$CONTAINERFILE" >>$GITHUB_OUTPUT
-        echo "timestamp=$(date --iso-8601=seconds)" >>$GITHUB_OUTPUT
-
-        # These cuts are just slicing and dicing the registry up into its component parts,
-        # mostly for convenient access by later steps without needing to recompute them.
-        # A standard registry URL has the format '<host>/<namespace>/<repository>' which
-        # this block parses out into individual outputs with the corresponding names.
-        echo "registry=$(echo $REGISTRY)" >>$GITHUB_OUTPUT
-        echo "host=$(echo $REGISTRY | cut -d '/' -f 1)" >>$GITHUB_OUTPUT
-        echo "namespace=$(echo $REGISTRY | rev | cut -d '/' -f 2- | rev)" >>$GITHUB_OUTPUT
-        echo "repository=$(echo $REGISTRY | rev | cut -d '/' -f 1 | rev)" >>$GITHUB_OUTPUT
-
-        # Add the commit hash as a tag
-        export TAGS="$TAGS;$SHA"
-
-        # Fetch the default branch using the github api. If the user enabled the 'add latest
-        # when on the default branch' functionality, then add the 'latest' tag to the list
-        # of tags to be applied
-        if [ ! -z "$GH_TOKEN" ]; then
-          export DEFAULT_BRANCH=$(gh api "/repos/$REPOSITORY" | jq -r '.default_branch')
-        else
-          echo "WARNING: No Github API token provided, dynamic determination of the default branch is not available.
-                Falling back to assuming the default branch is 'main'"
-          export DEFAULT_BRANCH='main'
-        fi
-        if [ "$DEFAULT_BRANCH" = "$BRANCH" ] && [ ! -z "$ADD_LATEST" ]; then
-          export TAGS="$TAGS;latest"
-        fi
-
-        # If the caller specified to add branch tags then add them. The branch name needs to
-        # match the proper format for a container registry tag (see here:
-        # https://pkg.go.dev/github.com/distribution/reference#pkg-overview) so if it doesn't
-        # then we need to error out (this is ok since adding these tags is an opt-in behavior,
-        # so the caller should know what they're doing).
-        if [ ! -z "$ADD_BRANCH_TAGS" ]; then
-          if [[ "$BRANCH" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$ ]]; then
-            export TAGS="$TAGS;$BRANCH;$BRANCH-${SHA:0:7}"
-          else
-            echo "ERROR: branch name '$BRANCH' is not a valid container registry tag and 'add-branch-tags' was set to 'true'"
-            exit 1
-          fi
-        fi
-
-        # This pipe is replacing the semicolons in the args input with newlines,
-        # parsing the resulting string as a JSON array, and then dumping that JSON
-        # array back to a serialized string that can be parsed using `fromJSON()` later.
-        echo "tags=$(echo $TAGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
-      # yamllint enable rule:line-length
-
-    - name: Build image
-      id: build
-      uses: redhat-actions/buildah-build@v2
-      with:
-        context: ${{ inputs.context }}
-        containerfiles: |
-          ${{ steps.parameters.outputs.containerfile }}
-        layers: true
-        image: ${{ steps.parameters.outputs.registry }}
-        tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
-        build-args: ${{ inputs.build-args }}
+      - name: Set build parameters
+        id: parameters
+        env:
+          # This is a convenience wrapper that allows the caller to specify the containerfile
+          # either as a full path or simply as an alternate name. If the 'containerfile' input
+          # has a '/' in it then we assume it's a path and provide it as is. If it does not have
+          # a '/' then we assume it's a bare filename and prepend the 'context' input to it to
+          # turn it into a path
+          CONTAINERFILE: ${{ contains(inputs.containerfile, '/') && inputs.containerfile || format('{0}/{1}', inputs.context, inputs.containerfile) }} # yamllint disable-line rule:line-length
+          REGISTRY: ${{ inputs.registry }}
+          SHA: ${{ github.sha }}
+          BRANCH: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+          TAGS: ${{ inputs.tags }}
+          ADD_LATEST: ${{ inputs.add-latest-tag-on-default || '' }}
+          ADD_BRANCH_TAGS: ${{ inputs.add-branch-tags || '' }}
+          GH_TOKEN: ${{ secrets.github-token }}
         # yamllint disable rule:line-length
-        labels: |
-          org.opencontainers.image.created=${{ steps.parameters.outputs.timestamp }}
-          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-          org.opencontainers.image.revision=${{ github.sha }}
-          org.opencontainers.image.ref.name=${{ github.ref_name }}
-          press.freedom.metadata.build.orchestrator=github_actions
-          press.freedom.metadata.build.job=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_number }}
-          press.freedom.metadata.build.initiator=${{ github.triggering_actor }}
-          press.freedom.metadata.build.workflow=${{ github.server_url }}/${{ github.workflow_ref }}
-          press.freedom.metadata.build.workflow-sha=${{ github.workflow_sha }}
-        # yamllint enable rule: line-length
+        run: |
+          echo "containerfile=$CONTAINERFILE" >>$GITHUB_OUTPUT
+          echo "timestamp=$(date --iso-8601=seconds)" >>$GITHUB_OUTPUT
 
-    - name: Export image
-      id: export-image
-      env:
-        IMAGE: ${{ format('{0}:{1}', steps.parameters.outputs.registry, github.sha) }}
-        EXPORT_FILE: ${{ runner.temp }}/${{ steps.parameters.outputs.repository }}.tar
-      run: |
-        echo "digest=$(podman image inspect $IMAGE | jq -r '.[0].Digest')" >>$GITHUB_OUTPUT
+          # These cuts are just slicing and dicing the registry up into its component parts,
+          # mostly for convenient access by later steps without needing to recompute them.
+          # A standard registry URL has the format '<host>/<namespace>/<repository>' which
+          # this block parses out into individual outputs with the corresponding names.
+          echo "registry=$(echo $REGISTRY)" >>$GITHUB_OUTPUT
+          echo "host=$(echo $REGISTRY | cut -d '/' -f 1)" >>$GITHUB_OUTPUT
+          echo "namespace=$(echo $REGISTRY | rev | cut -d '/' -f 2- | rev)" >>$GITHUB_OUTPUT
+          echo "repository=$(echo $REGISTRY | rev | cut -d '/' -f 1 | rev)" >>$GITHUB_OUTPUT
 
-        podman image save "$IMAGE" --output "$EXPORT_FILE"
+          # Add the commit hash as a tag
+          export TAGS="$TAGS;$SHA"
 
-        echo "export-file=$EXPORT_FILE" >>$GITHUB_OUTPUT
+          # Fetch the default branch using the github api. If the user enabled the 'add latest
+          # when on the default branch' functionality, then add the 'latest' tag to the list
+          # of tags to be applied
+          if [ ! -z "$GH_TOKEN" ]; then
+            export DEFAULT_BRANCH=$(gh api "/repos/$REPOSITORY" | jq -r '.default_branch')
+          else
+            echo "WARNING: No Github API token provided, dynamic determination of the default branch is not available.
+                  Falling back to assuming the default branch is 'main'"
+            export DEFAULT_BRANCH='main'
+          fi
+          if [ "$DEFAULT_BRANCH" = "$BRANCH" ] && [ ! -z "$ADD_LATEST" ]; then
+            export TAGS="$TAGS;latest"
+          fi
 
-    - name: Upload image artifact
-      id: upload-artifact
-      uses: actions/upload-artifact@v7
-      with:
-        name: ${{ steps.parameters.outputs.repository }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
-        path: ${{ steps.export-image.outputs.export-file }}
-        if-no-files-found: error
-        # This is intentionally set as low as possible to avoid going over artifact
-        # quotas on very active repositories. The purpose of the artifact is to reference
-        # the built image in later jobs of the same workflow run only, so a long-lived
-        # artifact is neither needed nor desirable. That's what registries are for.
-        retention-days: 1
+          # If the caller specified to add branch tags then add them. The branch name needs to
+          # match the proper format for a container registry tag (see here:
+          # https://pkg.go.dev/github.com/distribution/reference#pkg-overview) so if it doesn't
+          # then we need to error out (this is ok since adding these tags is an opt-in behavior,
+          # so the caller should know what they're doing).
+          if [ ! -z "$ADD_BRANCH_TAGS" ]; then
+            if [[ "$BRANCH" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$ ]]; then
+              export TAGS="$TAGS;$BRANCH;$BRANCH-${SHA:0:7}"
+            else
+              echo "ERROR: branch name '$BRANCH' is not a valid container registry tag and 'add-branch-tags' was set to 'true'"
+              exit 1
+            fi
+          fi
 
-    - name: Push image
-      id: push
-      if: ${{ steps.parameters.outputs.host != 'localhost' }}
-      uses: redhat-actions/push-to-registry@v2
-      with:
-        image: ${{ steps.parameters.outputs.registry }}
-        tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
-        registry: ${{ steps.parameters.outputs.host }}
-        username: ${{ secrets.registry-username || github.actor }}
-        password: ${{ secrets.registry-password || secrets.GITHUB_TOKEN }}
+          # This pipe is replacing the semicolons in the args input with newlines,
+          # parsing the resulting string as a JSON array, and then dumping that JSON
+          # array back to a serialized string that can be parsed using `fromJSON()` later.
+          echo "tags=$(echo $TAGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
+        # yamllint enable rule:line-length
+
+      - name: Build image
+        id: build
+        uses: redhat-actions/buildah-build@v2
+        with:
+          context: ${{ inputs.context }}
+          containerfiles: |
+            ${{ steps.parameters.outputs.containerfile }}
+          layers: true
+          image: ${{ steps.parameters.outputs.registry }}
+          tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
+          build-args: ${{ inputs.build-args }}
+          # yamllint disable rule:line-length
+          labels: |
+            org.opencontainers.image.created=${{ steps.parameters.outputs.timestamp }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
+            press.freedom.metadata.build.orchestrator=github_actions
+            press.freedom.metadata.build.job=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_number }}
+            press.freedom.metadata.build.initiator=${{ github.triggering_actor }}
+            press.freedom.metadata.build.workflow=${{ github.server_url }}/${{ github.workflow_ref }}
+            press.freedom.metadata.build.workflow-sha=${{ github.workflow_sha }}
+          # yamllint enable rule: line-length
+
+      - name: Export image
+        id: export-image
+        env:
+          IMAGE: ${{ format('{0}:{1}', steps.parameters.outputs.registry, github.sha) }}
+          EXPORT_FILE: ${{ runner.temp }}/${{ steps.parameters.outputs.repository }}.tar
+        run: |
+          echo "digest=$(podman image inspect $IMAGE | jq -r '.[0].Digest')" >>$GITHUB_OUTPUT
+
+          podman image save "$IMAGE" --output "$EXPORT_FILE"
+
+          echo "export-file=$EXPORT_FILE" >>$GITHUB_OUTPUT
+
+      - name: Upload image artifact
+        id: upload-artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.parameters.outputs.repository }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
+          path: ${{ steps.export-image.outputs.export-file }}
+          if-no-files-found: error
+          # This is intentionally set as low as possible to avoid going over artifact
+          # quotas on very active repositories. The purpose of the artifact is to reference
+          # the built image in later jobs of the same workflow run only, so a long-lived
+          # artifact is neither needed nor desirable. That's what registries are for.
+          retention-days: 1
+
+      - name: Push image
+        id: push
+        if: ${{ steps.parameters.outputs.host != 'localhost' }}
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.parameters.outputs.registry }}
+          tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
+          registry: ${{ steps.parameters.outputs.host }}
+          username: ${{ secrets.registry-username || github.actor }}
+          password: ${{ secrets.registry-password || secrets.GITHUB_TOKEN }}
 
     outputs:
       digest: ${{ steps.export-image.outputs.digest }}

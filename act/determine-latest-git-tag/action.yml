@@ -1,5 +1,4 @@
 ---
-
 name: Determine latest git tag
 
 description: Fetch the latest non "rc|alpha|beta" tag
