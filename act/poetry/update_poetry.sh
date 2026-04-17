@@ -11,7 +11,7 @@
 # for the composite action to use.
 #
 
-set -e
+set -eo pipefail
 
 function main() {
     local poetry_dir
@@ -26,7 +26,7 @@ function main() {
     poetry lock \
         --directory="${poetry_dir}" \
         --no-interaction \
-        --no-ansi
+        --no-ansi || return 1
 
     echo "Exporting requirements from Poetry to Pip-compatible format"
     local requirements_tmp
@@ -37,7 +37,7 @@ function main() {
         --output="${requirements_tmp}" \
         --no-interaction \
         --no-ansi \
-        --quiet
+        --quiet || return 1
 
     echo "Updating static requirements file at ${requirements}"
 
@@ -59,4 +59,4 @@ EOF
     echo "Done"
 }
 
-main "$@"
+main "$@" || echo "ERROR: failed to update poetry requirements"
