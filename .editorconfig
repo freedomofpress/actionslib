@@ -10,7 +10,7 @@ insert_final_newline = true
 
 [*.{yaml,yml}]
 indent_style = space
-indent_size = 2
+indent_size = 0
 quote_type = single
 
 [*.{html,sass,js,jsx,scss,css,php,svg}]

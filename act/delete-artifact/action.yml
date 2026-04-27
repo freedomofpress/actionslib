@@ -32,20 +32,20 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Fetch artifact info
-      id: fetch-artifact-id
-      shell: bash
-      env:
-        REPOSITORY: ${{ inputs.repository }}
-        ARTIFACT: ${{ inputs.artifact }}
-        GITHUB_TOKEN: ${{ inputs.github-token }}
-      run: bash ${{ github.action_path }}/fetch-artifact.sh
+  - name: Fetch artifact info
+    id: fetch-artifact-id
+    shell: bash
+    env:
+      REPOSITORY: ${{ inputs.repository }}
+      ARTIFACT: ${{ inputs.artifact }}
+      GITHUB_TOKEN: ${{ inputs.github-token }}
+    run: bash ${{ github.action_path }}/fetch-artifact.sh
 
-    - name: Delete artifact
-      id: delete-artifact
-      shell: bash
-      env:
-        REPOSITORY: ${{ inputs.repository }}
-        GITHUB_TOKEN: ${{ inputs.github-token }}
-        ARTIFACT_ID: ${{ steps.fetch-artifact-id.outputs.artifact-id }}
-      run: bash ${{ github.action_path }}/delete-artifact.sh
+  - name: Delete artifact
+    id: delete-artifact
+    shell: bash
+    env:
+      REPOSITORY: ${{ inputs.repository }}
+      GITHUB_TOKEN: ${{ inputs.github-token }}
+      ARTIFACT_ID: ${{ steps.fetch-artifact-id.outputs.artifact-id }}
+    run: bash ${{ github.action_path }}/delete-artifact.sh

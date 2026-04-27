@@ -46,33 +46,33 @@ jobs:
     name: Lint:Actions
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+        token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install zizmor
-        run: python -m pip install "zizmor==$ZIZMOR_VERSION"
-        env:
-          ZIZMOR_VERSION: ${{ inputs.zizmor-version }}
+    - name: Install zizmor
+      run: python -m pip install "zizmor==$ZIZMOR_VERSION"
+      env:
+        ZIZMOR_VERSION: ${{ inputs.zizmor-version }}
 
-      - name: Configure zizmor
-        run: |
-          # If the repository specifies its own config then we should
-          # respect that
-          if [ ! -f .github/zizmor.yml ]; then
-            echo "${ZIZMOR_DEFAULT_CONFIG}" >>.github/zizmor.yml
-          fi
+    - name: Configure zizmor
+      run: |
+        # If the repository specifies its own config then we should
+        # respect that
+        if [ ! -f .github/zizmor.yml ]; then
+          echo "${ZIZMOR_DEFAULT_CONFIG}" >>.github/zizmor.yml
+        fi
 
-      - name: Lint
-        run: zizmor "$ZIZMOR_PATH" $ZIZMOR_OPTIONS
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ZIZMOR_PATH: ${{ inputs.path }}
-          ZIZMOR_OPTIONS: ${{ inputs.zizmor-options }}
+    - name: Lint
+      run: zizmor "$ZIZMOR_PATH" $ZIZMOR_OPTIONS
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        ZIZMOR_PATH: ${{ inputs.path }}
+        ZIZMOR_OPTIONS: ${{ inputs.zizmor-options }}
