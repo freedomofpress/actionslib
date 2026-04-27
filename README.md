@@ -85,8 +85,8 @@ jobs:
     name: Example
     runs-on: ubuntu-latest
     steps:
-    - name: Perform an Action
-      uses: freedomofpress/actionslib/act/<action>@main
+      - name: Perform an Action
+        uses: freedomofpress/actionslib/act/<action>@main
 ```
 
 If the Composite Action specifies any inputs you can specify them using the `with`
@@ -99,22 +99,22 @@ jobs:
     name: Example
     runs-on: ubuntu-latest
     steps:
-    - name: Check if Gondor Needs Help
-      id: check-gondor-needs-help
-      run: >-
-        echo "assist-gondor=$(curl https://isgondorintrouble.com/?format=json | jq '.status')"
-        >> $GITHUB_OUTPUT
+      - name: Check if Gondor Needs Help
+        id: check-gondor-needs-help
+        run: >-
+          echo "assist-gondor=$(curl https://isgondorintrouble.com/?format=json | jq '.status')"
+          >> $GITHUB_OUTPUT
 
-    - name: Light the Beacons
-      id: light-the-beacons
-      if: ${{ steps.check-gondor-needs-help.outputs.assist-gondor }}
-      uses: freedomofpress/actionslib/act/beacons-of-gondor@main
-      with:
-        beacon-state: true
-        notify: theodin,aragorn,gandalf
+      - name: Light the Beacons
+        id: light-the-beacons
+        if: ${{ steps.check-gondor-needs-help.outputs.assist-gondor }}
+        uses: freedomofpress/actionslib/act/beacons-of-gondor@main
+        with:
+          beacon-state: true
+          notify: theodin,aragorn,gandalf
 
-    - name: Log the Beacons
-      run: echo "Successfully lit ${{ steps.light-the-beacons.outputs.number-of-beacons }} beacons"
+      - name: Log the Beacons
+        run: echo "Successfully lit ${{ steps.light-the-beacons.outputs.number-of-beacons }} beacons"
 ```
 
 See the documentation for each specific Composite Action to see what inputs and outputs

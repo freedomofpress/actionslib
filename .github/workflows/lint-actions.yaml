@@ -9,25 +9,25 @@ on:
     inputs:
       path:
         description: >-
-         Path to the directory or workflow file to lint. Defaults to the root
-         of the repo which will detect the default Actions workflow location
-         at '.github/workflows/'
+          Path to the directory or workflow file to lint. Defaults to the root
+          of the repo which will detect the default Actions workflow location
+          at '.github/workflows/'
         type: string
-        default: "."
+        default: '.'
 
       # Zizmor has no dependencies so there's no need to use a lockfile
       zizmor-version:
         description: Version of Zizmor to install
         type: string
-        default: "1.16.0"
+        default: '1.16.0'
 
       zizmor-options:
         description: Additional CLI options to pass to the Zizmor command.
         type: string
-        default: "--min-severity=medium"
+        default: '--min-severity=medium'
 
 env:
-  PYTHON_VERSION: "3.12"
+  PYTHON_VERSION: '3.12'
   ZIZMOR_DEFAULT_CONFIG: |
     ---
     rules:
@@ -47,13 +47,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 

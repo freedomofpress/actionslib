@@ -20,7 +20,7 @@ jobs:
     name: Setup
     steps:
     - name: Create artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: my-very-cool-artifact
         path: |
@@ -34,7 +34,7 @@ jobs:
     needs: setup
     steps:
     - name: Download artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: my-very-cool-artifact
         path: ./path/to/local/data

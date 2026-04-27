@@ -19,8 +19,8 @@ repos:
     entry: mdformat
     language: system
     args:
-    - "--number"
-    - "--wrap=90"
+    - '--number'
+    - '--wrap=90'
     types: [markdown]
 
   - id: check-toml
@@ -39,7 +39,7 @@ repos:
     name: Check for valid YAML file syntax
     entry: check-yaml
     args:
-    - "--unsafe"
+    - '--unsafe'
     language: system
     types: [yaml]
 

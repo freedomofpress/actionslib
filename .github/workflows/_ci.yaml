@@ -3,9 +3,9 @@ name: CI
 
 on:
   pull_request:
-    types: ["opened", "synchronize"]
+    types: ['opened', 'synchronize']
   push:
-    branches: ["main"]
+    branches: ['main']
 
 permissions: {}
 
@@ -19,9 +19,9 @@ jobs:
       matrix:
         target:
         - title: Workflows
-          directory: "."
+          directory: '.'
         - title: Composites
-          directory: "./act/"
+          directory: './act/'
     uses: ./.github/workflows/lint-actions.yaml
     with:
       path: ${{ matrix.target.directory }}
@@ -35,19 +35,19 @@ jobs:
         - title: Pre-Commit
           command: pre-commit run --all-files
         - title: YAML
-          command: yamllint .  # note the trailing '.'
-          # This command uses `find` to identify all files *not* in '.venv/' and '.git/', pipes the
-          # output to `awk` to determine if they are shell scripts, and then pipes that filtered
-          # output into shellcheck. See the below resources for rationale and reference
+          command: yamllint . # note the trailing '.'
+          # This command uses `find` to identify all files *not* in '.venv/' and '.git/', pipes
+          # the output to `awk` to determine if they are shell scripts, and then pipes that
+          # filtered output into shellcheck. See the below resources for rationale and reference
           # implementations:
           #
           # https://stackoverflow.com/a/16595367
           # https://www.shellcheck.net/wiki/Recursiveness
         - title: Shell
-          command: "find . -not \\( -path ./.git -prune \\) -not \\( -path ./.venv -prune \\) -type f -exec file {} + | awk -F: '/shell script/{print $1}' | xargs -r shellcheck"  # yamllint disable-line rule:line-length
+          command: "find . -not \\( -path ./.git -prune \\) -not \\( -path ./.venv -prune \\) -type f -exec file {} + | awk -F: '/shell script/{print $1}' | xargs -r shellcheck" # yamllint disable-line rule:line-length
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
 

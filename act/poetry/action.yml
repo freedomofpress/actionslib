@@ -6,7 +6,7 @@ description: Install Python and setup a local Poetry environment
 inputs:
   python-version:
     description: Version of Python to install
-    default: "3.11"
+    default: '3.11'
     required: false
 
   poetry-directory:
@@ -43,23 +43,24 @@ runs:
   using: composite
   steps:
   - name: Install python ${{ inputs.python-version }}
-    uses: actions/setup-python@v4
+    uses: actions/setup-python@v6
     with:
       python-version: ${{ inputs.python-version }}
 
   - name: Configure Job Cache
-    uses: actions/cache@v4
+    uses: actions/cache@v5
     with:
       path: |
         ~/.cache/pip
         ~/.cache/pypoetry/cache
         ~/.poetry
-      key: ${{ runner.os }}-py${{ inputs.python-version }}-${{ hashFiles(format('{0}/poetry.lock', inputs.poetry-directory)) }}  # yamllint disable-line rule:line-length
+      key: ${{ runner.os }}-py${{ inputs.python-version }}-${{ hashFiles(format('{0}/poetry.lock', inputs.poetry-directory)) }} # yamllint disable-line rule:line-length
 
   - name: Install Poetry
     shell: bash
     env:
-      POETRY_REQUIREMENTS: ${{ inputs.poetry-requirements || format('{0}/requirements-poetry.txt', github.action_path) }}  # yamllint disable-line rule:line-length
+      POETRY_REQUIREMENTS: ${{ inputs.poetry-requirements || format('{0}/requirements-poetry.txt', github.action_path) }} # yamllint disable-line rule:line-length
+    # yamllint disable rule:line-length
     run: |
       mkdir --parents ~/.local/share/poetry-runtime
       which python
@@ -73,6 +74,7 @@ runs:
       echo "Successfully installed $(~/.local/share/poetry-runtime/bin/poetry --version --no-color)"
       echo "~/.local/share/poetry-runtime/bin" >> $GITHUB_PATH
       ~/.local/share/poetry-runtime/bin/python --version
+    # yamllint enable rule:line-length
 
   - name: Install Poetry groups
     shell: bash
