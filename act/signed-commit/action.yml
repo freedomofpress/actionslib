@@ -29,6 +29,11 @@ inputs:
     required: false
     default: ""
 
+  push:
+    description: Whether to push the new commit to the Git remote
+    required: false
+    default: "true"
+
   message:
     description: Commit message
     required: false
@@ -130,6 +135,7 @@ runs:
 
     - name: Push to origin
       shell: bash
+      if: ${{ inputs.push != '' }}
       working-directory: ${{ inputs.repo-path }}
       env:
         BRANCH: ${{ inputs.create-branch }}
