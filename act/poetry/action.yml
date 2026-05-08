@@ -62,18 +62,18 @@ runs:
       POETRY_REQUIREMENTS: ${{ inputs.poetry-requirements || format('{0}/requirements-poetry.txt', github.action_path) }} # yamllint disable-line rule:line-length
     # yamllint disable rule:line-length
     run: |
-      mkdir --parents ~/.local/share/poetry-runtime
+      mkdir --parents /home/runner/.local/share/poetry-runtime
       which python
       python --version
-      python -m venv ~/.local/share/poetry-runtime
-      ~/.local/share/poetry-runtime/bin/pip install \
+      python -m venv /home/runner/.local/share/poetry-runtime
+      /home/runner/.local/share/poetry-runtime/bin/pip install \
         --requirement="$POETRY_REQUIREMENTS" \
         --disable-pip-version-check \
         --require-hashes \
         --no-color
       echo "Successfully installed $(~/.local/share/poetry-runtime/bin/poetry --version --no-color)"
-      echo "~/.local/share/poetry-runtime/bin" >> $GITHUB_PATH
-      ~/.local/share/poetry-runtime/bin/python --version
+      echo "/home/runner/.local/share/poetry-runtime/bin" >> $GITHUB_PATH
+      /home/runner/.local/share/poetry-runtime/bin/python --version
     # yamllint enable rule:line-length
 
   - name: Install Poetry groups
