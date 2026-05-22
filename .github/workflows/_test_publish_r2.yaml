@@ -8,6 +8,7 @@ on:
     paths:
     - '.github/workflows/_test_publish_r2.yaml'
     - '.github/workflows/publish-r2.yaml'
+    # Minimal outsider PR validation for publish path gating.
   push:
     branches:
     - main
