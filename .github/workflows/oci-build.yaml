@@ -85,6 +85,12 @@ on:
         type: boolean
         default: false
 
+      lint:
+        description: >-
+          Whether to use hadolint to lint the specified Containerfile before attempting build
+        type: boolean
+        default: false
+
     secrets:
       github-token:
         description: >-
@@ -240,6 +246,12 @@ jobs:
         # array back to a serialized string that can be parsed using `fromJSON()` later.
         echo "tags=$(echo $TAGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
       # yamllint enable rule:line-length
+
+    - name: Run hadolint
+      uses: hadolint/hadolint-action@v3.3.0
+      if: ${{ inputs.lint }}
+      with:
+        dockerfile: ${{ steps.parameters.outputs.containerfile }}
 
     - name: Build image
       id: build
