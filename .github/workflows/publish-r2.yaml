@@ -54,6 +54,8 @@ jobs:
       with:
         persist-credentials: false
         lfs: ${{ inputs.lfs }}
+        sparse-checkout: ${{ inputs.path }}
+        sparse-checkout-cone-mode: false
 
     - name: Download artifact payload (optional)
       if: ${{ inputs.artifact_name != '' }}
