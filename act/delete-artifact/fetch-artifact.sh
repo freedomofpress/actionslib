@@ -35,7 +35,7 @@ count=$(echo "$artifactData" | jq '.total_count')
 # Github supports having multiple artifacts with the same name (for some reason)
 # which we need to account for here. The better way to handle this would be to iterate
 # over the list of returned artifacts and delete them all, but the bash to do that is
-# non-trivial and I don't ant to write it right now. Where we're using this we don't need
+# non-trivial and I don't want to write it right now. Where we're using this we don't need
 # the ability to do this anyway, so for now we'll just error out if it's used that way.
 # This may be worth implementing in the future.
 if [ "$count" -gt 1 ]; then
@@ -43,9 +43,16 @@ if [ "$count" -gt 1 ]; then
     exit 1
 fi
 
-if [ "$count" -eq 0 ] && [ "$ERROR_IF_ABSENT" = 'true' ]; then
-    echo "ERROR: Artifact '${ARTIFACT}' does not exist" 1>&2
-    exit 1
+if [ "$count" -eq 0 ]; then
+    if [ "$ERROR_IF_ABSENT" = 'true' ]; then
+        echo "ERROR: Artifact '${ARTIFACT}' does not exist" 1>&2
+        exit 1
+    else
+        echo "WARNING: Artifact '${ARTIFACT}' does not exist and will be skipped" 1>&2
+        echo "continue=false" >>"$GITHUB_OUTPUT"
+        echo "artifact-id=" >>"$GITHUB_OUTPUT"
+    fi
+else
+    echo "continue=true" >>"$GITHUB_OUTPUT"
+    echo artifact-id="$(echo "$artifactData" | jq '.artifacts[0].id')" >>"$GITHUB_OUTPUT"
 fi
-
-echo artifact-id="$(echo "$artifactData" | jq '.artifacts[0].id')" >>"$GITHUB_OUTPUT"

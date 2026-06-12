@@ -39,11 +39,13 @@ runs:
       REPOSITORY: ${{ inputs.repository }}
       ARTIFACT: ${{ inputs.artifact }}
       GITHUB_TOKEN: ${{ inputs.github-token }}
+      ERROR_IF_ABSENT: ${{ inputs.error-if-absent }}
     run: bash ${{ github.action_path }}/fetch-artifact.sh
 
   - name: Delete artifact
     id: delete-artifact
     shell: bash
+    if: ${{ steps.fetch-artifact-id.outputs.continue == 'true' }}
     env:
       REPOSITORY: ${{ inputs.repository }}
       GITHUB_TOKEN: ${{ inputs.github-token }}
