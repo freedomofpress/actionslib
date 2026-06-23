@@ -2,7 +2,7 @@
 # configuration settings:
 # https://woodruffw.github.io/zizmor/configuration/
 ---
-name: Lint Github Actions
+name: Lint GitHub Actions
 
 on:
   workflow_call:

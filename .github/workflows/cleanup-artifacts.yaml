@@ -1,0 +1,39 @@
+---
+name: Cleanup GitHub Artifacts
+
+on:
+  workflow_call:
+    secrets:
+      github-token:
+        required: true
+    inputs:
+      artifacts:
+        description: >-
+          A JSON-encoded array of artifact names to be deleted.
+        type: string
+        required: true
+      error-if-absent:
+        description: >-
+          Raise an error if any of the specified artifacts are not found.
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  cleanup-artifacts:
+    name: Cleanup:Artifacts
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        artifact: ${{ fromJson(inputs.artifacts) }}
+    steps:
+      - name: Delete artifact ${{ matrix.artifact }}
+        uses: freedomofpress/actionslib/act/delete-artifact@main
+        with:
+          artifact: ${{ matrix.artifact }}
+          error-if-absent: ${{ inputs.error-if-absent }}
+          github-token: ${{ secrets.github-token }}
