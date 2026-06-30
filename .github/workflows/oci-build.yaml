@@ -263,7 +263,11 @@ jobs:
         layers: true
         image: ${{ steps.parameters.outputs.registry }}
         tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
-        build-args: ${{ inputs.build-args }}
+        build-args: |
+            ${{ inputs.build-args }}
+            GIT_COMMIT_SHA=${{ github.sha }}
+            GIT_BRANCH=${{ github.ref_name }}
+            GIT_TAG=${{ github.ref_type == 'tag' && github.ref_name || '' }}
         # yamllint disable rule:line-length
         labels: |
           org.opencontainers.image.created=${{ steps.parameters.outputs.timestamp }}
