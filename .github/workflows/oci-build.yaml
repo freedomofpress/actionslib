@@ -255,7 +255,7 @@ jobs:
 
     - name: Build image
       id: build
-      uses: redhat-actions/buildah-build@v2
+      uses: redhat-actions/buildah-build@061ffd31bb5c3f8733a6f9bbdf00a9fb02eb708c
       with:
         context: ${{ inputs.context }}
         containerfiles: |
