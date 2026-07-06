@@ -6,7 +6,7 @@ authors = ["Ethan Paul <ethan@freedom.press>"]
 include = ["test_resources.py"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.13,<4.0"
 toml = {version = "^0.10.2", optional = true}
 
 [tool.poetry.extras]
