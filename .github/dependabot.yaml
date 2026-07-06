@@ -36,9 +36,6 @@ updates:
       default-days: 7
     allow:
       - dependency-type: 'all'
-    commit-message:
-      prefix: 'build'
-      include: 'scope'
     groups:
       dependencies:
         patterns: ['*']
