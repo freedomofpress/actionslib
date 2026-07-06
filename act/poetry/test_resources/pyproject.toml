@@ -12,6 +12,9 @@ toml = {version = "^0.10.2", optional = true}
 [tool.poetry.extras]
 testing = ["toml"]
 
+[poetry.requires]
+plugins = ["poetry-plugin-export"]
+
 [tool.poetry.group.testing.dependencies]
 requests = "^2.32.3"
 
