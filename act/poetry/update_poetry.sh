@@ -20,7 +20,7 @@ function main() {
     local poetry_version
     poetry_version=$(poetry --version)
     local now
-    now=$(command date --iso-8601=minutes)
+    now=$(command date +"%Y-%m-%dT%H:%M%z")
 
     echo "Updating Python dependencies using ${poetry_version}"
     poetry lock \
@@ -30,14 +30,13 @@ function main() {
 
     echo "Exporting requirements from Poetry to Pip-compatible format"
     local requirements_tmp
-    requirements_tmp=$(mktemp --quiet)
+    requirements_tmp=$(mktemp -q)
 
     poetry export \
         --format=requirements.txt \
         --output="${requirements_tmp}" \
         --no-interaction \
-        --no-ansi \
-        --quiet || return 1
+        --no-ansi || return 1
 
     echo "Updating static requirements file at ${requirements}"
 
@@ -53,8 +52,8 @@ EOF
 
     cat "${requirements_tmp}" >> "${requirements}"
 
-    rm --force "${requirements_tmp}"
-    rm --recursive --force "$(poetry env info --path)"
+    rm -f "${requirements_tmp}"
+    rm -rf "$(poetry env info --path)"
 
     echo "Done"
 }
