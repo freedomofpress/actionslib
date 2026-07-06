@@ -161,7 +161,7 @@ jobs:
     # checkout jobs: one that specifies a default ref (if provided) and one that doesn't
     # so that we can piggy back on the actions/checkout default ref determination logic
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       if: ${{ ! inputs.build-ref }}
       with:
         persist-credentials: false
@@ -170,7 +170,7 @@ jobs:
         lfs: ${{ inputs.requires-lfs }}
 
     - name: Checkout Ref
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       if: ${{ inputs.build-ref }}
       with:
         ref: ${{ inputs.build-ref }}
