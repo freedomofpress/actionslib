@@ -9,7 +9,7 @@ help: ## List Makefile targets
 
 .PHONY: dev
 dev:  ## Create local development environment
-	@poetry install --sync
+	@poetry sync
 	@poetry run pre-commit install
 
 .PHONY: lint
