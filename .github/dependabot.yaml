@@ -12,6 +12,9 @@ updates:
       day: 'sunday'
     cooldown:
       default-days: 7
+    groups:
+      dependencies:
+        patterns: ['*']
 
   - package-ecosystem: 'pre-commit'
     directory: '/'
@@ -20,6 +23,9 @@ updates:
       day: 'sunday'
     cooldown:
       default-days: 7
+    groups:
+      dependencies:
+        patterns: ['*']
 
   - package-ecosystem: 'pip'
     directory: '/'
@@ -33,3 +39,6 @@ updates:
     commit-message:
       prefix: 'build'
       include: 'scope'
+    groups:
+      dependencies:
+        patterns: ['*']
