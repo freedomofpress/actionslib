@@ -187,5 +187,5 @@ testing = ["toml"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.13,<4.0"
-content-hash = "439734d5bfd12fdb3cb2860677fe454fda3f31a01cb7cf54602754f8d453c6aa"
+python-versions = ">=3.10,<4.0"
+content-hash = "80252082dd0d7add29e577dc81e95fc355ff68c2bd06ee84c550a27d649ca25e"
