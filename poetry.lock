@@ -14,38 +14,38 @@ files = [
 
 [[package]]
 name = "distlib"
-version = "0.4.0"
+version = "0.4.3"
 description = "Distribution utilities"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "distlib-0.4.0-py2.py3-none-any.whl", hash = "sha256:9659f7d87e46584a30b5780e43ac7a2143098441670ff0a49d5f9034c54a6c16"},
-    {file = "distlib-0.4.0.tar.gz", hash = "sha256:feec40075be03a04501a973d81f633735b4b69f98b05450592310c0f401a4e0d"},
+    {file = "distlib-0.4.3-py2.py3-none-any.whl", hash = "sha256:4b0ce306c966eb73bc3a7b6abad017c556dadd92c44701562cd528ac7fde4d5b"},
+    {file = "distlib-0.4.3.tar.gz", hash = "sha256:f152097224a0ae24be5a0f6bae1b9359af82133bce63f98a95f86cae1aede9ed"},
 ]
 
 [[package]]
 name = "filelock"
-version = "3.25.2"
+version = "3.29.5"
 description = "A platform independent file lock."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "filelock-3.25.2-py3-none-any.whl", hash = "sha256:ca8afb0da15f229774c9ad1b455ed96e85a81373065fb10446672f64444ddf70"},
-    {file = "filelock-3.25.2.tar.gz", hash = "sha256:b64ece2b38f4ca29dd3e810287aa8c48182bbecd1ae6e9ae126c9b35f1382694"},
+    {file = "filelock-3.29.5-py3-none-any.whl", hash = "sha256:8af830889ba3a0ffcefbd6c7d2af8a54012058103771f2e10848222f476a1693"},
+    {file = "filelock-3.29.5.tar.gz", hash = "sha256:6e6034c57a00a020e767f2614a5539863f056de7e7991d6d1473aef7ff73f156"},
 ]
 
 [[package]]
 name = "identify"
-version = "2.6.18"
+version = "2.6.19"
 description = "File identification library for Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "identify-2.6.18-py2.py3-none-any.whl", hash = "sha256:8db9d3c8ea9079db92cafb0ebf97abdc09d52e97f4dcf773a2e694048b7cd737"},
-    {file = "identify-2.6.18.tar.gz", hash = "sha256:873ac56a5e3fd63e7438a7ecbc4d91aca692eb3fefa4534db2b7913f3fc352fd"},
+    {file = "identify-2.6.19-py2.py3-none-any.whl", hash = "sha256:20e6a87f786f768c092a721ad107fc9df0eb89347be9396cadf3f4abbd1fb78a"},
+    {file = "identify-2.6.19.tar.gz", hash = "sha256:6be5020c38fcb07da56c53733538a3081ea5aa70d36a156f83044bfbf9173842"},
 ]
 
 [package.extras]
@@ -94,32 +94,32 @@ tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "mdformat-gfm"
-version = "0.4.1"
+version = "1.0.0"
 description = "Mdformat plugin for GitHub Flavored Markdown compatibility"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "mdformat_gfm-0.4.1-py3-none-any.whl", hash = "sha256:63c92cfa5102f55779d4e04b16a79a6a5171e658c6c479175c0955fb4ca78dde"},
-    {file = "mdformat_gfm-0.4.1.tar.gz", hash = "sha256:e189e728e50cfb15746abc6b3178ca0e2bebbb7a8d3d98fbc9e24bc1a4c65564"},
+    {file = "mdformat_gfm-1.0.0-py3-none-any.whl", hash = "sha256:7305a50efd2a140d7c83505b58e3ac5df2b09e293f9bbe72f6c7bee8c678b005"},
+    {file = "mdformat_gfm-1.0.0.tar.gz", hash = "sha256:d1d49a409a6acb774ce7635c72d69178df7dce1dc8cdd10e19f78e8e57b72623"},
 ]
 
 [package.dependencies]
 markdown-it-py = "*"
-mdformat = ">=0.7.5,<0.8.0"
-mdformat-tables = ">=0.4.0"
+mdformat = ">=0.7.5"
 mdit-py-plugins = ">=0.2.0"
+wcwidth = ">=0.2.13"
 
 [[package]]
 name = "mdformat-gfm-alerts"
-version = "1.0.2"
+version = "2.0.0"
 description = "An mdformat plugin for `gfm_alerts`."
 optional = false
 python-versions = ">=3.9.0"
 groups = ["main"]
 files = [
-    {file = "mdformat_gfm_alerts-1.0.2-py3-none-any.whl", hash = "sha256:2cf914cce33e7ca3d0847e8e410cce961d2b22b96d63ca88413ebc177238ccff"},
-    {file = "mdformat_gfm_alerts-1.0.2.tar.gz", hash = "sha256:4881199e28865fdd21b81e856e07a9ceeaa63253b153a96e1127a4bbe7f0b53c"},
+    {file = "mdformat_gfm_alerts-2.0.0-py3-none-any.whl", hash = "sha256:e003422cc003bc6e936d0797553f23201095a1d1e8602c5062296d223f2ae516"},
+    {file = "mdformat_gfm_alerts-2.0.0.tar.gz", hash = "sha256:eb2b3189ad44ae28a6b6b714609dd3a30d6e3b898f02b1e6473d7b08df8bb3c0"},
 ]
 
 [package.dependencies]
@@ -130,34 +130,15 @@ mdit-py-plugins = ">=0.4.1"
 test = ["pytest (>=8.3.4)", "pytest-beartype (>=0.1.1)", "pytest-cov (>=6.0.0)"]
 
 [[package]]
-name = "mdformat-tables"
-version = "1.0.0"
-description = "An mdformat plugin for rendering tables."
-optional = false
-python-versions = ">=3.7.0"
-groups = ["main"]
-files = [
-    {file = "mdformat_tables-1.0.0-py3-none-any.whl", hash = "sha256:94cd86126141b2adc3b04c08d1441eb1272b36c39146bab078249a41c7240a9a"},
-    {file = "mdformat_tables-1.0.0.tar.gz", hash = "sha256:a57db1ac17c4a125da794ef45539904bb8a9592e80557d525e1f169c96daa2c8"},
-]
-
-[package.dependencies]
-mdformat = ">=0.7.5,<0.8.0"
-wcwidth = ">=0.2.13"
-
-[package.extras]
-test = ["coverage", "pytest (>=6.0,<7.0)", "pytest-cov"]
-
-[[package]]
 name = "mdit-py-plugins"
-version = "0.5.0"
+version = "0.6.1"
 description = "Collection of plugins for markdown-it-py"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "mdit_py_plugins-0.5.0-py3-none-any.whl", hash = "sha256:07a08422fc1936a5d26d146759e9155ea466e842f5ab2f7d2266dd084c8dab1f"},
-    {file = "mdit_py_plugins-0.5.0.tar.gz", hash = "sha256:f4918cb50119f50446560513a8e311d574ff6aaed72606ddae6d35716fe809c6"},
+    {file = "mdit_py_plugins-0.6.1-py3-none-any.whl", hash = "sha256:214c82fb2ac524472ab6a5bcab1de80f73b50443e187f401bfd77efbc7c6481d"},
+    {file = "mdit_py_plugins-0.6.1.tar.gz", hash = "sha256:a2bca0f039f39dbd35fb74ae1b5f998608c437463371f0ff7f49a19a17a114d0"},
 ]
 
 [package.dependencies]
@@ -166,7 +147,7 @@ markdown-it-py = ">=2.0.0,<5.0.0"
 [package.extras]
 code-style = ["pre-commit"]
 rtd = ["myst-parser", "sphinx-book-theme"]
-testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
+testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions", "pytest-timeout"]
 
 [[package]]
 name = "mdurl"
@@ -194,32 +175,31 @@ files = [
 
 [[package]]
 name = "pathspec"
-version = "1.0.4"
+version = "1.1.1"
 description = "Utility library for gitignore style pattern matching of file paths."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "pathspec-1.0.4-py3-none-any.whl", hash = "sha256:fb6ae2fd4e7c921a165808a552060e722767cfa526f99ca5156ed2ce45a5c723"},
-    {file = "pathspec-1.0.4.tar.gz", hash = "sha256:0210e2ae8a21a9137c0d470578cb0e595af87edaa6ebf12ff176f14a02e0e645"},
+    {file = "pathspec-1.1.1-py3-none-any.whl", hash = "sha256:a00ce642f577bf7f473932318056212bc4f8bfdf53128c78bbd5af0b9b20b189"},
+    {file = "pathspec-1.1.1.tar.gz", hash = "sha256:17db5ecd524104a120e173814c90367a96a98d07c45b2e10c2f3919fff91bf5a"},
 ]
 
 [package.extras]
 hyperscan = ["hyperscan (>=0.7)"]
 optional = ["typing-extensions (>=4)"]
 re2 = ["google-re2 (>=1.1)"]
-tests = ["pytest (>=9)", "typing-extensions (>=4.15)"]
 
 [[package]]
 name = "platformdirs"
-version = "4.9.4"
+version = "4.10.0"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "platformdirs-4.9.4-py3-none-any.whl", hash = "sha256:68a9a4619a666ea6439f2ff250c12a853cd1cbd5158d258bd824a7df6be2f868"},
-    {file = "platformdirs-4.9.4.tar.gz", hash = "sha256:1ec356301b7dc906d83f371c8f487070e99d3ccf9e501686456394622a01a934"},
+    {file = "platformdirs-4.10.0-py3-none-any.whl", hash = "sha256:fb516cdb12eb0d857d0cd85a7c57cea4d060bee4578d6cf5a14dfdf8cbf8784a"},
+    {file = "platformdirs-4.10.0.tar.gz", hash = "sha256:31e761a6a0ca04faf7353ea759bdba55652be214725111e5aac52dfa29d4bef7"},
 ]
 
 [[package]]
@@ -259,14 +239,14 @@ tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "python-discovery"
-version = "1.2.1"
+version = "1.4.3"
 description = "Python interpreter discovery"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "python_discovery-1.2.1-py3-none-any.whl", hash = "sha256:b6a957b24c1cd79252484d3566d1b49527581d46e789aaf43181005e56201502"},
-    {file = "python_discovery-1.2.1.tar.gz", hash = "sha256:180c4d114bff1c32462537eac5d6a332b768242b76b69c0259c7d14b1b680c9e"},
+    {file = "python_discovery-1.4.3-py3-none-any.whl", hash = "sha256:b6e1e4a7d9e3f6948c39746ffe8218225162d738ba39d05ab1d2f6c1cac4878c"},
+    {file = "python_discovery-1.4.3.tar.gz", hash = "sha256:ad57d7045a862460d4a235986c33f13ed707d3aeb9153fa47eb7dfd0d4673289"},
 ]
 
 [package.dependencies]
@@ -274,7 +254,7 @@ filelock = ">=3.15.4"
 platformdirs = ">=4.3.6,<5"
 
 [package.extras]
-docs = ["furo (>=2025.12.19)", "sphinx (>=9.1)", "sphinx-autodoc-typehints (>=3.6.3)", "sphinxcontrib-mermaid (>=2)"]
+docs = ["furo (>=2025.12.19)", "sphinx (>=9.1)", "sphinx-autodoc-typehints (>=3.6.3)", "sphinxcontrib-mermaid (>=2)", "sphinxcontrib-towncrier (>=0.4)", "towncrier (>=25.8)"]
 testing = ["covdefaults (>=2.3)", "coverage (>=7.5.4)", "pytest (>=8.3.5)", "pytest-mock (>=3.14)", "setuptools (>=75.1)"]
 
 [[package]]
@@ -451,33 +431,33 @@ files = [
 
 [[package]]
 name = "virtualenv"
-version = "21.2.0"
+version = "21.5.1"
 description = "Virtual Python Environment builder"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "virtualenv-21.2.0-py3-none-any.whl", hash = "sha256:1bd755b504931164a5a496d217c014d098426cddc79363ad66ac78125f9d908f"},
-    {file = "virtualenv-21.2.0.tar.gz", hash = "sha256:1720dc3a62ef5b443092e3f499228599045d7fea4c79199770499df8becf9098"},
+    {file = "virtualenv-21.5.1-py3-none-any.whl", hash = "sha256:55aa670b67bbfb991b03fda39bd3276d92c419d702376e98c5df1c9989a26783"},
+    {file = "virtualenv-21.5.1.tar.gz", hash = "sha256:dca3bf98275a59c652b69d68e73433e597d977c2da9198882479d1a7188009c8"},
 ]
 
 [package.dependencies]
 distlib = ">=0.3.7,<1"
 filelock = {version = ">=3.24.2,<4", markers = "python_version >= \"3.10\""}
 platformdirs = ">=3.9.1,<5"
-python-discovery = ">=1"
+python-discovery = ">=1.4.2"
 typing-extensions = {version = ">=4.13.2", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "wcwidth"
-version = "0.6.0"
+version = "0.8.2"
 description = "Measures the displayed width of unicode strings in a terminal"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "wcwidth-0.6.0-py3-none-any.whl", hash = "sha256:1a3a1e510b553315f8e146c54764f4fb6264ffad731b3d78088cdb1478ffbdad"},
-    {file = "wcwidth-0.6.0.tar.gz", hash = "sha256:cdc4e4262d6ef9a1a57e018384cbeb1208d8abbc64176027e2c2455c81313159"},
+    {file = "wcwidth-0.8.2-py3-none-any.whl", hash = "sha256:d63947694a0539a1d51e01eda7caf800c291020e6cdd7e28ad7b14dd33ad4f85"},
+    {file = "wcwidth-0.8.2.tar.gz", hash = "sha256:91fbef97204b96a3d4d421609b80340b760cf33e26da123ff243d76b1fda8dda"},
 ]
 
 [[package]]
@@ -501,26 +481,26 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 
 [[package]]
 name = "zizmor"
-version = "1.23.1"
+version = "1.26.1"
 description = "Static analysis for GitHub Actions"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "zizmor-1.23.1-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:85f222eb610379aeeea76e4dc616621fdae9f21db77d1b006820452cafa739eb"},
-    {file = "zizmor-1.23.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:82a7925bbdbc69713cbeb19ec90012cba3b92e3ace65ae60088e9604c5724182"},
-    {file = "zizmor-1.23.1-py3-none-manylinux_2_24_aarch64.whl", hash = "sha256:19af913bb4bcd6dfeea41477fcf203d69e053f4b14a2b35690485c44ffa6c4a7"},
-    {file = "zizmor-1.23.1-py3-none-manylinux_2_28_armv7l.whl", hash = "sha256:08ae0d8f4d665f6cf9b475913c64d2193d52ffc6f02ce66d4dcfd1b92daf4f82"},
-    {file = "zizmor-1.23.1-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:08233d0d25947e43ac92374f22383c04e43f351f44bc44d60b3c0695157c0f3e"},
-    {file = "zizmor-1.23.1-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:795e04dff47ca1d1b0af2d7a5d3a96909a18d5fa80548534951efb24af6ec83e"},
-    {file = "zizmor-1.23.1-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:c62059c75100d0bc1a19cd95a6dce9b93ac5ab2e7d7bcdd974c51b2c5eb503e3"},
-    {file = "zizmor-1.23.1-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:cf0dc93171e9ae7b822041471715ea7a9f5ebefa6865ceb6d1a39729a982d770"},
-    {file = "zizmor-1.23.1-py3-none-win32.whl", hash = "sha256:229c6b275941a18b03eef0ba5d24089dfbbe4fc34633a6b22bf924294ef69cde"},
-    {file = "zizmor-1.23.1-py3-none-win_amd64.whl", hash = "sha256:dc9befe3c08fea7d0fa3a0bc98073fadf31a77f0572b1f7931e1ff300337fe11"},
-    {file = "zizmor-1.23.1.tar.gz", hash = "sha256:eb9871f1de004d8c6e35ff403bd6a41c495062736e78b9c4a98988970c598639"},
+    {file = "zizmor-1.26.1-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:7ea21ca959c8e888de238fee81d73a1fdf89a82067eac75b8f1acdbd23e2eeaf"},
+    {file = "zizmor-1.26.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:78083b495593f8b0b9dec14036a0836a5afcddda8a40738336ff4e399476b741"},
+    {file = "zizmor-1.26.1-py3-none-manylinux_2_24_aarch64.whl", hash = "sha256:bb7ebbe565a3742eb49a590352127ad549bb122b9b4ff9424ebab7525fa3b6b6"},
+    {file = "zizmor-1.26.1-py3-none-manylinux_2_28_armv7l.whl", hash = "sha256:d3049010b6bd6f849413b6d20c28e0c677b90e0a5b2bc73cbee7f7bd86dc5828"},
+    {file = "zizmor-1.26.1-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:6a958d8a0941d7e1d0de8436670b5cb7fc64c8028b4d16e3f519ccc77f953cef"},
+    {file = "zizmor-1.26.1-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:d2744cdf944436ca7a009ae8b626a017a40381ec990216abd6cf6b8beb23323a"},
+    {file = "zizmor-1.26.1-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:44099f426af9da750ff9f548a0084e11d7d83e0158fe1a2778672398d728efdd"},
+    {file = "zizmor-1.26.1-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:8313cc264dec792f00a7328eb7c8e89e7d62d54f950fc897d1e6a5a6e5762203"},
+    {file = "zizmor-1.26.1-py3-none-win32.whl", hash = "sha256:c96d7787d69fb298eae939e00dfdf7f534d7dfbd9cc17ab442c0650a56851415"},
+    {file = "zizmor-1.26.1-py3-none-win_amd64.whl", hash = "sha256:0a05acf6068609fb6df3b137276cf18a686226a1e0e207941cb34a85929f16cf"},
+    {file = "zizmor-1.26.1.tar.gz", hash = "sha256:0c2cc575007a4db99d89d5acc6120cfa7b61504bc2394c3b50af348c73f1916e"},
 ]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "2c4f2a34fdc535b27b06e94466ef982eda07e85d58059403a5ab761e14c0b2ff"
+content-hash = "498c7b66eb117857db3984d4a1b3a7ead6be0b61e3bfcf4e09b9ffda006b96d4"
