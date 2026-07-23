@@ -41,8 +41,8 @@ permissions:
   pull-requests: read
 
 jobs:
-  lint-actions:
-    name: Lint:Actions
+  trigger:
+    name: Trigger:K8s-Configs
     runs-on: ubuntu-latest
     steps:
     - name: Validate inputs
@@ -51,8 +51,6 @@ jobs:
         SHA: ${{ inputs.sha }}
         K8S_CONFIGS_TOKEN: ${{ secrets.k8s-configs-token }}
       run: |
-        set -Eeuo pipefail
-
         retcode=0
 
         if [ -z "$TRIGGER" ]; then echo "ERROR: Input 'trigger' not provided" >&2; retcode=1; fi
@@ -70,6 +68,7 @@ jobs:
       env:
         SHA: ${{ inputs.sha }}
         GH_TOKEN: ${{ secrets.local-token }}
+        REPOSITORY: ${{ github.repository }}
       run: |
         set -Eeuo pipefail
 
@@ -78,23 +77,24 @@ jobs:
           exit 1
         fi
 
-        export link=$(gh pr list \
+        github_pr_url=$(gh pr list \
+          --repo "$REPOSITORY" \
           --search "$SHA" \
           --state "merged" \
           --json url \
           --jq '.[].url')
 
-        echo "link=$link" >> "$GITHUB_OUTPUT"
+        echo "link=$github_pr_url" >> "$GITHUB_OUTPUT"
 
     - name: Dispatch
       env:
         GH_TOKEN: ${{ secrets.k8s-configs-token }}
         TRIGGER: ${{ inputs.trigger }}
         SHA: ${{ inputs.sha }}
-        LINK: ${{ inputs.link || steps.find-pr.outputs.link }}
+        PR_LINK: ${{ inputs.link || steps.find-pr.outputs.link }}
       run: |
         gh api repos/freedomofpress/k8s-configs/dispatches \
           --raw-field "event_type=update-source" \
-          --raw-filed "client_payload[trigger]=$TRIGGER" \
-          --raw-filed "client_payload[sha]=$SHA"
-          --raw-filed "client_payload[link]=$LINK"
+          --raw-field "client_payload[trigger]=$TRIGGER" \
+          --raw-field "client_payload[sha]=$SHA" \
+          --raw-field "client_payload[link]=$PR_LINK"
