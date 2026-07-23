@@ -1,0 +1,100 @@
+---
+name: Update Source in K8s-Configs
+
+on:
+  workflow_call:
+    inputs:
+      trigger:
+        description: >-
+          Name of the trigger in K8s-Configs to activate in `<env>/<name>` format.
+          See the `triggers/` directory in the repository for available values.
+        type: string
+
+      sha:
+        description: Full git commit SHA to update the deployment to use
+        type: string
+        required: true
+
+      link:
+        description: >-
+          URL to include in the commit message of K8s-Configs. Typically used to link
+          to the PR that introduced a change.
+        type: string
+        default: ''
+
+    secrets:
+      k8s-configs-token:
+        description: >-
+          Github token used to trigger the dispatch event in k8s-configs. Must have
+          'contents: write' permissions on the k8s-configs repository.
+        required: true
+      local-token:
+        description: >-
+          Github token used to discover the URL of the pull request associated with
+          the source commit. Must have 'pull-requests: read' permissions on the calling
+          repository. Only used if the 'link' input is not provided.
+        required: false
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
+jobs:
+  lint-actions:
+    name: Lint:Actions
+    runs-on: ubuntu-latest
+    steps:
+    - name: Validate inputs
+      env:
+        TRIGGER: ${{ inputs.trigger }}
+        SHA: ${{ inputs.sha }}
+        K8S_CONFIGS_TOKEN: ${{ secrets.k8s-configs-token }}
+      run: |
+        set -Eeuo pipefail
+
+        retcode=0
+
+        if [ -z "$TRIGGER" ]; then echo "ERROR: Input 'trigger' not provided" >&2; retcode=1; fi
+        if [ -z "$SHA" ]; then echo "ERROR: Input 'sha' not provided" >&2; retcode=1; fi
+        if [ -z "$K8S_CONFIGS_TOKEN" ]; then
+          echo "ERROR: Secret 'k8s-configs-token' must be set to a Github auth token" >&2
+          retcode=1
+        fi
+
+        exit "$retcode"
+
+    - name: Find PR link
+      id: find-pr
+      if: ${{ inputs.link == '' }}
+      env:
+        SHA: ${{ inputs.sha }}
+        GH_TOKEN: ${{ secrets.local-token }}
+      run: |
+        set -Eeuo pipefail
+
+        if [ -z "$GH_TOKEN" ]; then
+          echo "ERROR: Secret 'local-token' must be set to a Github auth token" >&2
+          exit 1
+        fi
+
+        export link=$(gh pr list \
+          --search "$SHA" \
+          --state "merged" \
+          --json url \
+          --jq '.[].url')
+
+        echo "link=$link" >> "$GITHUB_OUTPUT"
+
+    - name: Dispatch
+      env:
+        GH_TOKEN: ${{ secrets.k8s-configs-token }}
+        TRIGGER: ${{ inputs.trigger }}
+        SHA: ${{ inputs.sha }}
+        LINK: ${{ inputs.link || steps.find-pr.outputs.link }}
+      run: |
+        gh api repos/freedomofpress/k8s-configs/dispatches \
+          --raw-field "event_type=update-source" \
+          --raw-filed "client_payload[trigger]=$TRIGGER" \
+          --raw-filed "client_payload[sha]=$SHA"
+          --raw-filed "client_payload[link]=$LINK"

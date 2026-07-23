@@ -11,6 +11,7 @@ composite actions for use at FPF.
   - [lint-actions](.github/workflows/lint-actions.yaml)
   - [publish-r2](.github/workflows/publish-r2.yaml)
   - [oci-build](.github/workflows/oci-build.yaml)
+  - [update-k8s-trigger](.github/workflows/update-k8s-trigger.yaml)
 - [Available Composite Actions](#available-composite-actions)
   - [poetry](act/poetry/)
   - [delete-artifact](act/delete-artifact/)
@@ -129,11 +130,12 @@ they support.
 
 Index of available Reusable Workflows in this repository.
 
-| Name           | Description                                                                                                                 | Docs                                          | Tests |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ----- |
-| `lint-actions` | Use [Zizmor](https://woodruffw.github.io/zizmor/) to run static analysis checks on Github Actions workflow files.           | [:link:](.github/workflows/lint-actions.yaml) |       |
-| `publish-r2`   | Use rclone to publish static content to Cloudflare's R2                                                                     | [:link:](.github/workflows/publish-r2.yaml)   |       |
-| `oci-build`    | Use [buildah](https://buildah.io/) to build (and [podman](https://podman.io/) to optionally publish) an OCI container image | [:link:](.github/workflows/oci-build.yaml)    |       |
+| Name                 | Description                                                                                                                 | Docs                                          | Tests |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ----- |
+| `lint-actions`       | Use [Zizmor](https://woodruffw.github.io/zizmor/) to run static analysis checks on Github Actions workflow files.           | [:link:](.github/workflows/lint-actions.yaml) |       |
+| `publish-r2`         | Use rclone to publish static content to Cloudflare's R2                                                                     | [:link:](.github/workflows/publish-r2.yaml)   |       |
+| `oci-build`          | Use [buildah](https://buildah.io/) to build (and [podman](https://podman.io/) to optionally publish) an OCI container image | [:link:](.github/workflows/oci-build.yaml)    |       |
+| `update-k8s-trigger` | Trigger a run of the `update-sources` workflow in K8s-Configs to rebuild K8s manifests for deployment                       |                                               |       |
 
 ## Available Composite Actions
 
