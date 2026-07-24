@@ -18,6 +18,13 @@ on:
         type: string
         default: 'Containerfile'
 
+      target:
+        description: >-
+          Name of the target build stage to build in a multi-stage Containerfile. Passed to
+          buildah as ``--target``. If empty (the default) then the final stage is built.
+        type: string
+        default: ''
+
       build-args:
         description: >-
           Build arguments to pass into the build operation. Arguments are provided in
@@ -264,6 +271,7 @@ jobs:
         image: ${{ steps.parameters.outputs.registry }}
         tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
         build-args: ${{ inputs.build-args }}
+        extra-args: ${{ inputs.target && format('--target={0}', inputs.target) || '' }}
         # yamllint disable rule:line-length
         labels: |
           org.opencontainers.image.created=${{ steps.parameters.outputs.timestamp }}
