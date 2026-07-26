@@ -305,7 +305,7 @@ jobs:
     - name: Push image
       id: push
       if: ${{ steps.parameters.outputs.host != 'localhost' }}
-      uses: redhat-actions/push-to-registry@v2
+      uses: redhat-actions/push-to-registry@v2.8
       with:
         image: ${{ steps.parameters.outputs.registry }}
         tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
