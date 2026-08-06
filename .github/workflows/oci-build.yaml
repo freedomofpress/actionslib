@@ -217,8 +217,9 @@ jobs:
         echo "namespace=$(echo $REGISTRY | rev | cut -d '/' -f 2- | rev)" >>$GITHUB_OUTPUT
         echo "repository=$(echo $REGISTRY | rev | cut -d '/' -f 1 | rev)" >>$GITHUB_OUTPUT
 
-        # Add the commit hash as a tag
-        export TAGS="$TAGS;$SHA"
+        # Add the commit hash as a tag. The expansion guards against a leading
+        # separator, which would otherwise yield an empty first tag.
+        export TAGS="${TAGS:+$TAGS;}$SHA"
 
         # Fetch the default branch using the github api. If the user enabled the 'add latest
         # when on the default branch' functionality, then add the 'latest' tag to the list
@@ -252,6 +253,11 @@ jobs:
         # parsing the resulting string as a JSON array, and then dumping that JSON
         # array back to a serialized string that can be parsed using `fromJSON()` later.
         echo "tags=$(echo $TAGS | tr ';' '\n' | jq -R | jq -scM)" >>$GITHUB_OUTPUT
+
+        # The same list, as fully-qualified '<registry>:<tag>' references. The push step
+        # needs these because push-to-registry concatenates its 'registry' and 'image'
+        # inputs, which duplicates the host when 'image' is already fully qualified.
+        echo "refs=$(echo $TAGS | tr ';' '\n' | sed "s|^|$REGISTRY:|" | jq -R | jq -scM)" >>$GITHUB_OUTPUT
       # yamllint enable rule:line-length
 
     - name: Run hadolint
@@ -315,9 +321,11 @@ jobs:
       if: ${{ steps.parameters.outputs.host != 'localhost' }}
       uses: redhat-actions/push-to-registry@v3
       with:
-        image: ${{ steps.parameters.outputs.registry }}
-        tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
-        registry: ${{ steps.parameters.outputs.host }}
+        # Passing full '<registry>:<tag>' references makes the action use them verbatim
+        # as both source and destination. The 'image' and 'registry' inputs are omitted
+        # deliberately: the action would concatenate them, and it warns that they are
+        # ignored when full references are given.
+        tags: ${{ join(fromJson(steps.parameters.outputs.refs), ' ') }}
         username: ${{ secrets.registry-username || github.actor }}
         password: ${{ secrets.registry-password || secrets.GITHUB_TOKEN }}
 
