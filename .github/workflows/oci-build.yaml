@@ -262,7 +262,7 @@ jobs:
 
     - name: Build image
       id: build
-      uses: redhat-actions/buildah-build@v3
+      uses: redhat-actions/buildah-build@v3.0.2
       with:
         context: ${{ inputs.context }}
         containerfiles: |
@@ -313,7 +313,7 @@ jobs:
     - name: Push image
       id: push
       if: ${{ steps.parameters.outputs.host != 'localhost' }}
-      uses: redhat-actions/push-to-registry@v2
+      uses: redhat-actions/push-to-registry@v3
       with:
         image: ${{ steps.parameters.outputs.registry }}
         tags: ${{ join(fromJson(steps.parameters.outputs.tags), ' ') }}
