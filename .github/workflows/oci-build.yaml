@@ -280,14 +280,14 @@ jobs:
       # yamllint enable rule:line-length
 
     - name: Run hadolint
-      uses: hadolint/hadolint-action@v3.3.0
+      uses: hadolint/hadolint-action@v3.4.0
       if: ${{ inputs.lint }}
       with:
         dockerfile: ${{ steps.parameters.outputs.containerfile }}
 
     - name: Build image
       id: build
-      uses: redhat-actions/buildah-build@v3.0.2
+      uses: redhat-actions/buildah-build@v3.1.0
       if: ${{ inputs.build-mode == 'containerfile' }}
       with:
         context: ${{ inputs.context }}
