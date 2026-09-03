@@ -69,6 +69,7 @@ jobs:
         SHA: ${{ inputs.sha }}
         GH_TOKEN: ${{ secrets.local-token }}
         REPOSITORY: ${{ github.repository }}
+        COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
       run: |
         set -Eeuo pipefail
 
@@ -80,11 +81,16 @@ jobs:
         github_pr_url=$(gh pr list \
           --repo "$REPOSITORY" \
           --search "$SHA" \
-          --state "merged" \
           --json url \
           --jq '.[].url')
 
-        echo "link=$github_pr_url" >> "$GITHUB_OUTPUT"
+        if [ -z "$github_pr_url" ]; then
+          gh_link="$COMMIT_URL"
+        else
+          gh_link="$github_pr_url"
+        fi
+
+        echo "link=$gh_link" >> "$GITHUB_OUTPUT"
 
     - name: Dispatch
       env:
