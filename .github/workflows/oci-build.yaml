@@ -280,7 +280,7 @@ jobs:
       # yamllint enable rule:line-length
 
     - name: Run hadolint
-      uses: hadolint/hadolint-action@v3.4.0
+      uses: hadolint/hadolint-action@v3.5.0
       if: ${{ inputs.lint }}
       with:
         dockerfile: ${{ steps.parameters.outputs.containerfile }}
