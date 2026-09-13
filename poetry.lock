@@ -26,14 +26,14 @@ files = [
 
 [[package]]
 name = "filelock"
-version = "3.32.4"
+version = "3.32.5"
 description = "A platform independent file lock."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "filelock-3.32.4-py3-none-any.whl", hash = "sha256:22e58ca3b1ae3b98993b762d7338367ae64fe50252bf78d59da3bfebcdf1cedd"},
-    {file = "filelock-3.32.4.tar.gz", hash = "sha256:2bde2e4cf732e0153406d8a7bc80620ecf5e621fe0d25e41143c4e3b4733ff30"},
+    {file = "filelock-3.32.5-py3-none-any.whl", hash = "sha256:142cd9fa77a872c5e78c62329a0d15278fadc686eb89e760017968961a4fd6b2"},
+    {file = "filelock-3.32.5.tar.gz", hash = "sha256:f6a6a28f743f9b95ce19db5abe0f376f75eb56517dff21e1a4751e2657d3e83d"},
 ]
 
 [[package]]
@@ -191,14 +191,14 @@ re2 = ["google-re2 (>=1.1)"]
 
 [[package]]
 name = "platformdirs"
-version = "4.11.5"
+version = "4.11.7"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "platformdirs-4.11.5-py3-none-any.whl", hash = "sha256:89f8d42695853b89c7170bd49bc3dc593f98a71e695ede88e06a3b247bc4563b"},
-    {file = "platformdirs-4.11.5.tar.gz", hash = "sha256:e8b31f4f8bcbbedef91a6b57a706255e4f148d2a4e01648382a0a47342539173"},
+    {file = "platformdirs-4.11.7-py3-none-any.whl", hash = "sha256:8a02cb259042c79d1cd0450facc2fe6dc9d303ae7901afbe33bf8ea0b188cef6"},
+    {file = "platformdirs-4.11.7.tar.gz", hash = "sha256:4f41487eeeeeb07f3a6625e61d9bc0ae6809f92d3386dbd74392fbb76108104d"},
 ]
 
 [[package]]
@@ -425,14 +425,14 @@ files = [
 
 [[package]]
 name = "virtualenv"
-version = "21.7.7"
+version = "21.7.8"
 description = "Virtual Python Environment builder"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "virtualenv-21.7.7-py3-none-any.whl", hash = "sha256:67a6a68fef3ad8ca16b8b89f33fd8f97996cc0bf0db31629d07ecf8dec539a2c"},
-    {file = "virtualenv-21.7.7.tar.gz", hash = "sha256:6874376f99ba6b8d4e3ee8bde67f9285412400c7d5b29ba41ee6daa5e0221bdc"},
+    {file = "virtualenv-21.7.8-py3-none-any.whl", hash = "sha256:3040eb3cbf5d32b10ffd57d167e6a162237ad82ba7d8cf1400a1efed593d85ac"},
+    {file = "virtualenv-21.7.8.tar.gz", hash = "sha256:1dc49c790072a9072cb1803f9bd62aa69cd583077cada32390f75505cdc64c9b"},
 ]
 
 [package.dependencies]
@@ -475,26 +475,26 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 
 [[package]]
 name = "zizmor"
-version = "1.29.0"
+version = "1.30.0"
 description = "Static analysis for GitHub Actions"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "zizmor-1.29.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:ea72f84d610643d57f96430c655a3780d0b874e477d32e14eae8e910f6cce1fd"},
-    {file = "zizmor-1.29.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:5aafe617d7b1e0c0c15d58fdf20495f360f74a791dfa136f76630b4cc06c2a34"},
-    {file = "zizmor-1.29.0-py3-none-manylinux_2_24_aarch64.whl", hash = "sha256:67644ae8d6d0394204b9a488f7d86f0dd66fe562f4ba85fc53e6105a6bfc7b6a"},
-    {file = "zizmor-1.29.0-py3-none-manylinux_2_28_armv7l.whl", hash = "sha256:81e4093fed5c8a41d6ae7bb773085a9d2e6c0b0a0b560d46a9c76d69be0a07ed"},
-    {file = "zizmor-1.29.0-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:587b99c2e1b34575c6c8565c2bfde415ca8bc0310f5589f19bc948c8dea10a20"},
-    {file = "zizmor-1.29.0-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:061600f23c46f2e400bcdef666c236de7e5c0b07dd6ca046daa001eb1514b909"},
-    {file = "zizmor-1.29.0-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:332546480be38aca95c149f835e0dcb7679ab5d74618a90c6ccb3fa6b8c7b99d"},
-    {file = "zizmor-1.29.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:a7462b9ab45d72a20ad5ab8193b430df8184c59e2bf46954ddd09496f2f00b45"},
-    {file = "zizmor-1.29.0-py3-none-win32.whl", hash = "sha256:8c759e68cd866375030ca39e19e2de47a056b7be7288c1620e2d5b4c274f631f"},
-    {file = "zizmor-1.29.0-py3-none-win_amd64.whl", hash = "sha256:0fb85948ba5ffc7a8116eee36fe9cfc10167225c97bd2810e3378e66a9fd27c4"},
-    {file = "zizmor-1.29.0.tar.gz", hash = "sha256:60e34e83c67064e0036989c7c525d13413e897aa4c4f683f1efb2048cdb28a47"},
+    {file = "zizmor-1.30.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:51c96204572b9f96b940806a371a9c57c8cff30cf93d3bd73c2febe483f942df"},
+    {file = "zizmor-1.30.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:e4193537785dd07177227e4695871ffae1d7fe3f6043c217498445e71b477bc1"},
+    {file = "zizmor-1.30.0-py3-none-manylinux_2_24_aarch64.whl", hash = "sha256:7569a58319fb270c14a64663a6565929035f26f6f6d13059314f796e988129eb"},
+    {file = "zizmor-1.30.0-py3-none-manylinux_2_28_armv7l.whl", hash = "sha256:0e69a86290dff4c41b51c381a27029b5dc2b748c0510a9a333b18f862ea1bc68"},
+    {file = "zizmor-1.30.0-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:9c08a7c34b33ed6f9a3a3d28fcf8c64e3e078c53c51bc9ce05c32ec3ba7feae9"},
+    {file = "zizmor-1.30.0-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:baa02978518248bf9f011e6ceca7b7c5efb5b893810cd4954e01785e1b68f959"},
+    {file = "zizmor-1.30.0-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:0148b61f6315ad363ae748f838e8ed81e1cfb3ade6bbe480e7516e4fba630b82"},
+    {file = "zizmor-1.30.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:1f15ed62ff34ad7875427384b03a2f72995d9ab8ddcb50dc141b25763de3aaa2"},
+    {file = "zizmor-1.30.0-py3-none-win32.whl", hash = "sha256:39f15155db3e4af9bb5cf125a236c67fd84ddd3174f60b4111b27c691b337e00"},
+    {file = "zizmor-1.30.0-py3-none-win_amd64.whl", hash = "sha256:ca321b5b1cb85d08ac0c3c86275bfd5a6b5564c176437e3b41e10bd1e4463296"},
+    {file = "zizmor-1.30.0.tar.gz", hash = "sha256:9a17ac3bb043afbbd9d3c8b6f309fa5b319c6a32e3259fbaf050f6fcd3d0a9cd"},
 ]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "66bc29c4ae53dd4af8f5dfa99206d3acffa6d9bfafd809770ea934138097e274"
+content-hash = "318c9431c1ba64eda0cfa4b2bfc411786243eeae1fac9761067f13e1069e9f1f"
