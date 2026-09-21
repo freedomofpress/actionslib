@@ -57,6 +57,15 @@ on:
         type: string
         default: ''
 
+      pre-build-script:
+        description: >-
+          Executable and arguments to run in the checkout after it is prepared and before the
+          image is built, for example to generate a file the Containerfile copies in. Runs from
+          the ``context`` directory. Pair it with ``requires-deep-history`` if it inspects git
+          history or tags.
+        type: string
+        default: ''
+
       requires-submodules:
         description: >-
           Indicates the build requires git submodules to be checked out. If true, submodules will
@@ -278,6 +287,18 @@ jobs:
         # inputs, which duplicates the host when 'image' is already fully qualified.
         echo "refs=$(echo $TAGS | tr ';' '\n' | sed "s|^|$REGISTRY:|" | jq -R | jq -scM)" >>$GITHUB_OUTPUT
       # yamllint enable rule:line-length
+
+    - name: Run pre-build script
+      if: ${{ inputs.pre-build-script }}
+      working-directory: ${{ inputs.context }}
+      env:
+        # Passed as data rather than spliced into `run:`, so a value containing quotes
+        # or newlines cannot corrupt the generated script. Not a privilege boundary --
+        # a caller who can set this can equally commit the script it names. Unquoted so
+        # the executable and its arguments word-split apart: this takes a command, not
+        # a shell line.
+        PRE_BUILD_SCRIPT: ${{ inputs.pre-build-script }}
+      run: $PRE_BUILD_SCRIPT
 
     - name: Run hadolint
       uses: hadolint/hadolint-action@v3.5.0
