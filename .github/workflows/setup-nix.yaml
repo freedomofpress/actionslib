@@ -1,0 +1,97 @@
+---
+# Configure nix for use with a devshell. Only accepts a single in-line script to run.
+#
+# If you want to configure nix, then add multiple steps in your own workflow,
+# or if you want to set environment for nix, e.g.
+# 'NIXPKGS_ALLOW_UNFREE=1 nix build --impure',
+# then use `freedomofpress/actionslib/act/setup-nix` instead.
+name: Setup Nix
+
+on:
+  workflow_call:
+    inputs:
+      run:
+        description: >-
+          Bash script to run in the repo root, e.g. 'nix develop --command just lint'
+        type: string
+        required: true
+
+      runs-on:
+        description: Runner label
+        type: string
+        default: 'ubuntu-24.04'
+
+      timeout-minutes:
+        description: Job timeout
+        type: number
+        default: 60
+
+      submodules:
+        description: Checkout submodules ('true', 'false', or 'recursive')
+        type: string
+        default: 'false'
+
+      # Passed through to act/setup-nix; see its action.yml. Keep defaults in
+      # step with it: a composite given '' doesn't fall back to its own.
+      nix-version:
+        type: string
+        default: '2.34.7'
+      nix-sha256:
+        type: string
+        default: ''
+      nix-conf:
+        type: string
+        default: ''
+      accept-flake-config:
+        type: boolean
+        default: false
+      cache:
+        type: boolean
+        default: true
+      cache-key-prefix:
+        type: string
+        default: 'nix'
+      save:
+        type: string
+        default: 'auto'
+      gc-max-store-size:
+        type: string
+        default: '2G'
+      free-disk-space:
+        type: boolean
+        default: false
+
+permissions: {}
+
+jobs:
+  nix:
+    name: Nix
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+        submodules: ${{ inputs.submodules }}
+
+    - name: Setup Nix
+      uses: freedomofpress/actionslib/act/setup-nix@main
+      with:
+        nix-version: ${{ inputs.nix-version }}
+        nix-sha256: ${{ inputs.nix-sha256 }}
+        nix-conf: ${{ inputs.nix-conf }}
+        accept-flake-config: ${{ inputs.accept-flake-config }}
+        cache: ${{ inputs.cache }}
+        cache-key-prefix: ${{ inputs.cache-key-prefix }}
+        save: ${{ inputs.save }}
+        gc-max-store-size: ${{ inputs.gc-max-store-size }}
+        free-disk-space: ${{ inputs.free-disk-space }}
+
+    - name: Run
+      shell: bash
+      env:
+        SETUP_NIX_RUN: ${{ inputs.run }}
+      run: bash -euo pipefail -c "$SETUP_NIX_RUN"

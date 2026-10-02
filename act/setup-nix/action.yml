@@ -1,0 +1,121 @@
+---
+name: FPF/Setup-Nix
+
+description: >-
+  Install a digest-verified Nix with hardened nix.conf, and restore the Nix
+  store from the Actions cache
+
+inputs:
+  nix-version:
+    description: >-
+      Nix version; one listed in nix-archives.sha256, or any other with
+      nix-sha256.
+    required: false
+    default: '2.34.7'
+
+  nix-sha256:
+    description: SHA-256 of the Nix tarball for the runner platform (overrides built-ins)
+    required: false
+    default: ''
+
+  nix-conf:
+    description: >-
+      Extra nix.conf lines, e.g. 'extra-substituters = ...' plus
+      'extra-trusted-public-keys = ...'
+    required: false
+    default: ''
+
+  accept-flake-config:
+    description: Honor the flake's nixConfig (which may add substituters)
+    required: false
+    default: 'false'
+
+  cache:
+    description: Restore and save the Nix store via the Actions cache
+    required: false
+    default: 'true'
+
+  cache-key-prefix:
+    description: >-
+      Cache key prefix; vary it per distinct devshell, not per matrix job
+      building the same one
+    required: false
+    default: 'nix'
+
+  save:
+    description: >-
+      Save the store to the cache: 'auto' (default branch only, whose cache
+      every branch can read), 'true', or 'false'
+    required: false
+    default: 'auto'
+
+  gc-max-store-size:
+    description: Garbage-collect the store to this size (e.g. '2G') before saving
+    required: false
+    default: '2G'
+
+  github-access-token:
+    description: >-
+      Token for GitHub fetches (avoids rate limits); the installer writes it to
+      nix.conf and ~/.netrc, readable by later steps. Set '' to omit.
+    required: false
+    default: ${{ github.token }}
+
+  free-disk-space:
+    description: Reclaim runner disk (slow, minutes) before installing large closures
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+  - name: Free disk space
+    if: ${{ inputs.free-disk-space == 'true' }}
+    uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+
+  - name: Fetch and verify Nix ${{ inputs.nix-version }}
+    id: fetch
+    shell: bash
+    env:
+      NIX_VERSION: ${{ inputs.nix-version }}
+      NIX_SHA256: ${{ inputs.nix-sha256 }}
+    run: "$GITHUB_ACTION_PATH/fetch-nix.sh"
+
+  - name: Install Nix
+    uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
+    with:
+      nix_version: ${{ inputs.nix-version }}
+      nix_archives_url: ${{ steps.fetch.outputs.archives-url }}
+      github_access_token: ${{ inputs.github-access-token }}
+      nix_conf: |
+        substituters = https://cache.nixos.org
+        trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+        require-sigs = true
+        # Root the devshell's inputs, so the pre-save gc keeps them.
+        keep-env-derivations = true
+        keep-outputs = true
+        ${{ inputs.nix-conf }}
+
+  # The installer appends `accept-flake-config = true`; the last assignment wins.
+  - name: Harden nix.conf
+    shell: bash
+    env:
+      ACCEPT_FLAKE_CONFIG: ${{ inputs.accept-flake-config }}
+    run: |
+      conf="${XDG_CONFIG_HOME:-$HOME/.config}/nix/nix.conf"
+      echo "accept-flake-config = $ACCEPT_FLAKE_CONFIG" >> "$conf"
+      nix config show | grep -E '^(substituters|trusted-public-keys|accept-flake-config) '
+
+  - name: Setup Nix cache
+    if: ${{ inputs.cache == 'true' }}
+    uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+    with:
+      primary-key: >-
+        ${{ inputs.cache-key-prefix }}-${{ runner.os }}-${{ runner.arch }}-${{
+        hashFiles('**/*.nix', '**/flake.lock') }}
+      restore-prefixes-first-match: >-
+        ${{ inputs.cache-key-prefix }}-${{ runner.os }}-${{ runner.arch }}-
+      save: >-
+        ${{ inputs.save == 'true' || (inputs.save == 'auto' &&
+        github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
+      gc-max-store-size: ${{ inputs.gc-max-store-size }}
