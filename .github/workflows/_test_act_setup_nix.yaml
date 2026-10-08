@@ -1,0 +1,63 @@
+---
+name: Test:FPF/Setup-Nix
+
+on:
+  workflow_dispatch:
+
+  pull_request:
+    types: ['opened', 'synchronize']
+    paths:
+    - 'act/setup-nix/**'
+    - '.github/workflows/_test_act_setup_nix.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  test-setup-nix:
+    name: Setup-Nix(${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner:
+        - ubuntu-24.04
+        - ubuntu-24.04-arm
+        - macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+
+    # Dependabot bumps the installer pin, but not the digests.
+    - name: Verify digests track the installer pin
+      working-directory: act/setup-nix
+      run: |
+        pin="$(grep -oE 'nix-quick-install-action@[0-9a-f]+ # v[0-9.]+' action.yml)"
+        pin="${pin##* }"
+        release="$(sed -n 's/^# release: //p' nix-archives.sha256)"
+        [[ "$pin" == "$release" ]] || {
+          echo "FAIL: pin is $pin, digests are $release; run ./fetch-nix.sh update $pin"
+          exit 1
+        }
+
+    - name: Setup Nix
+      uses: ./act/setup-nix
+      with:
+        # No flake here to key a cache on.
+        cache: 'false'
+
+    - name: Verify nix.conf
+      run: |
+        set -euo pipefail
+        conf="$(nix config show)"
+        for want in \
+          'accept-flake-config = false' \
+          'substituters = https://cache.nixos.org' \
+          'require-sigs = true'; do
+          grep -qxF "$want" <<<"$conf" || { echo "FAIL: missing '$want'"; exit 1; }
+          echo "PASS: $want"
+        done
+
+    - name: Verify a substituted build
+      run: nix build --no-link nixpkgs#hello
