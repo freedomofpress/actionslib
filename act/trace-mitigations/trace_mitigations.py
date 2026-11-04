@@ -188,7 +188,7 @@ def scan_commit(repo: str, rev: str) -> Scan:
         "grep",
         "-z",
         "-l",
-        "-I",
+        "--text",
         "--fixed-strings",
         "-e",
         f"pytest.mark.{TAG}",
