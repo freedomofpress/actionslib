@@ -1,0 +1,39 @@
+---
+# Fail a pull request or merge-queue entry that leaves a threat-model mitigation
+# with no covered test. See act/trace-mitigations/README.md for the tags.
+#
+# Call it from workflows triggered by `pull_request` and `merge_group`. On other
+# events it scans without comparing.
+name: Trace Mitigations
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  trace-mitigations:
+    name: Mitigation tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+    # For a pull request, GitHub checks out a test commit that merges the PR into
+    # the target branch. Fetching two commits deep also gets that commit's parent,
+    # which is the target branch as it was when the PR was tested.
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+        fetch-depth: 2
+
+    - name: Trace mitigations
+      uses: freedomofpress/actionslib/act/trace-mitigations@main
+      with:
+        # HEAD^1 is the target branch. Comparing it with the merge commit shows
+        # only what the PR itself changes.
+        base: >-
+          ${{ github.event_name == 'pull_request' && 'HEAD^1'
+          || github.event_name == 'merge_group' && github.event.merge_group.base_sha
+          || '' }}

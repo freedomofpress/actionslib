@@ -1,0 +1,54 @@
+---
+name: FPF/Trace-Mitigations
+
+description: >-
+  Find tests tagged with threat-model mitigation IDs, and fail when a change
+  leaves a mitigation with no covered test
+
+inputs:
+  path:
+    description: Path to the git checkout to scan
+    required: false
+    default: '.'
+
+  base:
+    description: >-
+      Revision to compare against. If it isn't in the checkout, the action
+      fetches it from origin. Leave empty to scan only, without failing on
+      lost tests.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+  # The newest Python parses any syntax the scanned tests might use.
+  # update-environment: false keeps it off the caller's PATH.
+  - name: Install python
+    id: python
+    uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    with:
+      python-version: '3.x'
+      update-environment: false
+
+  - name: Fetch base revision
+    if: ${{ inputs.base != '' }}
+    shell: bash
+    working-directory: ${{ inputs.path }}
+    env:
+      BASE: ${{ inputs.base }}
+    run: |
+      if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+        git fetch --no-tags --depth=1 origin "$BASE"
+      fi
+
+  - name: Trace mitigations
+    shell: bash
+    env:
+      PYTHON: ${{ steps.python.outputs.python-path }}
+      TRACE_PATH: ${{ inputs.path }}
+      TRACE_BASE: ${{ inputs.base }}
+    run: >-
+      "$PYTHON" -I "$GITHUB_ACTION_PATH/trace_mitigations.py"
+      --path="$TRACE_PATH"
+      --base="$TRACE_BASE"
