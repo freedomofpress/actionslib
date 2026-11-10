@@ -41,7 +41,7 @@ permissions: {}
 jobs:
   publish:
     runs-on: ubuntu-latest
-    container: debian:bookworm
+    container: debian:trixie
     permissions:
       contents: read
       actions: read
