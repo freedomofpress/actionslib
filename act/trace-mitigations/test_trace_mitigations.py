@@ -185,6 +185,126 @@ class TestPython(unittest.TestCase):
         )
 
 
+def scan_comments(path: str, source: str) -> list[tuple[str, str, int, str | None]]:
+    return found(tm.scan_comment_tags(path, textwrap.dedent(source)))
+
+
+class TestRust(unittest.TestCase):
+    def test_tags(self):
+        result = scan_comments(
+            "proxy/src/main.rs",
+            """
+            #[cfg(test)]
+            mod tests {
+                // mitigates: MITIG1, MITIGQW2
+                /// Checks the proxy rejects unknown fields.
+                // mitigates: MITIG3 not-an-id
+                #[test]
+                fn test_unknown_fields() {}
+
+                // mitigates: MITIG4
+                #[tokio::test]
+                #[cfg_attr(
+                    not(feature = "qubesdb"),
+                    ignore
+                )]
+                async fn test_qubesdb() {}
+
+                // mitigates: MITIG5
+                #[test]
+                #[ignore = "flaky"]
+                pub fn test_ignored() {}
+
+                // mitigates: MITIG6
+                fn helper() {}
+
+                // mitigates: MITIG7
+
+                #[test]
+                fn test_after_blank_line() {}
+
+                #[test]
+                // mitigates: MITIG8
+                fn test_tag_after_attribute() {}
+
+                #[ignore]
+                // mitigates: MITIG9
+                #[test]
+                fn test_ignore_before_tag() {}
+            }
+            """,
+        )
+        self.assertEqual(
+            result,
+            [
+                ("MITIG1", "test_unknown_fields", 8, None),
+                ("MITIGQW2", "test_unknown_fields", 8, None),
+                ("MITIG3", "test_unknown_fields", 8, None),
+                ("MITIG4", "test_qubesdb", 16, "ignore"),
+                ("MITIG5", "test_ignored", 21, "ignore"),
+                ("MITIG8", "test_tag_after_attribute", 33, None),
+                ("MITIG9", "test_ignore_before_tag", 38, "ignore"),
+            ],
+        )
+
+
+class TestJavaScript(unittest.TestCase):
+    def test_tags(self):
+        result = scan_comments(
+            "app/src/main/proxy.test.ts",
+            """
+            describe("proxy", () => {
+              // mitigates: MITIG1
+              it("rejects unknown fields", () => {});
+
+              /* mitigates: MITIG2 */
+              it(
+                "has a title prettier wrapped onto the next line",
+                async () => {},
+              );
+
+              /**
+               * mitigates: MITIG3
+               */
+              it.each([
+                ["a", 1],
+                ["b", (2)],
+              ])("handles %s", (name, n) => {});
+
+              // mitigates: MITIG4
+              it.skipIf(process.env.CI)(`skips ${"in CI"}`, () => {});
+
+              // mitigates: MITIG5
+              test.todo("later");
+
+              // mitigates: MITIG6
+              xit('is disabled', () => {});
+
+              // mitigates: MITIG7
+              describe.sequential("a group", () => {});
+
+              // A comment that only says mitigates: MITIG8 in passing.
+              it("is not tagged", () => {});
+
+              // mitigates: MITIG9
+              const notATest = 1;
+            });
+            """,
+        )
+        self.assertEqual(
+            result,
+            [
+                ("MITIG1", "rejects unknown fields", 4, None),
+                ("MITIG2", "has a title prettier wrapped onto the next line", 7, None),
+                ("MITIG3", "handles %s", 15, None),
+                ("MITIG4", 'skips ${"in CI"}', 21, "skipIf"),
+                ("MITIG5", "later", 24, "todo"),
+                ("MITIG6", "is disabled", 27, "xit"),
+                ("MITIG7", "a group", 30, None),
+            ],
+        )
+
+
 class TestExceptions(unittest.TestCase):
     def test_parse(self):
         exceptions, errors = tm.parse_exceptions(
@@ -325,6 +445,24 @@ class TestGit(unittest.TestCase):
         code, stdout, _ = self.run_script("--base", broken)
         self.assertEqual(code, 0)
         self.assertIn("::warning file=securedrop/tests/test_apparmor.py", stdout)
+
+    def test_comment_tags(self):
+        self.commit(
+            {
+                "proxy/src/main.rs": "// mitigates: MITIG60\n#[test]\nfn test_proxy() {}\n",
+                "app/src/proxy.test.ts": '// mitigates: MITIG61\nit("works", () => {});\n',
+                # Prose that isn't directly above a test, in a file type not scanned.
+                "docs/notes.md": "// mitigates: MITIG62\nit('x')\n",
+            }
+        )
+        base = self.git("rev-parse", "HEAD")
+        self.commit({"app/src/proxy.test.ts": 'it("works", () => {});\n'})
+        code, stdout, summary = self.run_script("--base", base)
+        self.assertEqual(code, 1)
+        self.assertEqual(lost_ids(stdout), ["MITIG61"])
+        self.assertIn("| MITIG61 | 1 | 0 | **lost its last test** |", summary)
+        self.assertNotIn("MITIG60 |", summary)
+        self.assertNotIn("MITIG62", summary)
 
     def test_scan_only_writes_json(self):
         commit = self.commit(

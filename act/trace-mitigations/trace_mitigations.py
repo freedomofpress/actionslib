@@ -1,5 +1,8 @@
-"""Find Python tests tagged with ``@pytest.mark.mitigates("MITIG<n>")``, and fail when
-a change leaves a threat-model mitigation with no covered test.
+"""Find tests tagged with threat-model mitigation IDs, and fail when a change leaves a
+mitigation with no covered test.
+
+Python tests use ``@pytest.mark.mitigates("MITIG<n>")``. Rust and JS/TS tests use a
+``// mitigates: MITIG<n>`` comment directly above the test.
 
 It reads source from git objects and never runs the tests. See README.md for the
 details.
@@ -31,7 +34,7 @@ class TaggedTest:
     path: str
     test: str
     line: int
-    # The skip/xfail marker that keeps this test from counting, if any.
+    # The skip, xfail, ignore, or similar marker that keeps this test from counting.
     excluded_by: str | None = None
 
     @property
@@ -148,6 +151,152 @@ def scan_python(path: str, source: bytes) -> Scan:
     _walk_python(path, tree.body, "", ids, excluded_by, result.tests)
     return result
 
+# Rust and JS/TS
+#
+# These tests are tagged with a comment directly above them. The standard library
+# can't parse either language, so the scan works line by line: only comments, more
+# tags, and (in Rust) attributes may sit between a tag and its test.
+
+JS_GLOBS = ("*.js", "*.jsx", "*.mjs", "*.cjs", "*.ts", "*.tsx", "*.mts", "*.cts")
+
+_COMMENT_RE = re.compile(r"^\s*(?://|/\*|\*)")
+_COMMENT_TAG_RE = re.compile(rf"^\s*(?://+!?|/\*+!?|\*)\s*{TAG}:(?P<ids>.*?)(?:\*/)?\s*$")
+
+_RUST_FN_RE = re.compile(
+    r"^\s*(?:pub(?:\s*\([^)]*\))?\s+)?(?:(?:const|async|unsafe)\s+)*fn\s+(?P<name>\w+)"
+)
+# #[test], #[tokio::test], and so on.
+_RUST_TEST_RE = re.compile(r"^#\s*\[\s*(?:\w+\s*::\s*)*test\b")
+_RUST_IGNORE_RE = re.compile(r"^#\s*\[\s*(?:ignore\b|cfg_attr\s*\(.*\bignore\b)")
+
+_JS_TEST_RE = re.compile(
+    r"^\s*(?P<fn>x?(?:it|test|describe)|suite)(?P<mods>(?:\s*\.\s*[A-Za-z]+)*)\s*\("
+)
+# Vitest modifiers that keep a test from counting. skipIf and runIf are
+# conditional, and like pytest's skipif they always count as skipped.
+_JS_EXCLUDING_MODS = ("skip", "todo", "fails", "skipIf", "runIf")
+# Modifiers that take their own arguments before the title: it.each([...])("title")
+_JS_CALL_MODS = ("each", "for", "skipIf", "runIf")
+_JS_STRING_RE = re.compile(r"\s*(?P<q>['\"`])(?P<s>(?:\\.|(?!(?P=q)).)*)(?P=q)", re.S)
+
+
+def _comment_ids(text: str) -> list[str]:
+    return [value for value in re.split(r"[\s,]+", text) if ID_RE.fullmatch(value)]
+
+
+def _skip_balanced(text: str, start: int) -> int | None:
+    """Return the index just past the ) that closes a ( already open at start."""
+    depth = 1
+    quote = None
+    i = start
+    while i < len(text):
+        char = text[i]
+        if quote:
+            if char == "\\":
+                i += 1
+            elif char == quote:
+                quote = None
+        elif char in "'\"`":
+            quote = char
+        elif char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth -= 1
+            if depth == 0:
+                return i + 1
+        i += 1
+    return None
+
+
+def _js_title(text: str, mods: list[str]) -> str | None:
+    """Return the test's title from the text just past ``it(`` (or ``it.each(``)."""
+    pos = 0
+    if any(mod in _JS_CALL_MODS for mod in mods):
+        end = _skip_balanced(text, 0)
+        match = re.compile(r"\s*\(").match(text, end) if end is not None else None
+        if match is None:
+            return None
+        pos = match.end()
+    match = _JS_STRING_RE.match(text, pos)
+    return match["s"] if match else None
+
+
+def _read_rust_attribute(lines: list[str], start: int) -> tuple[str, int]:
+    """Return an attribute that may span lines, and the index of the line after it."""
+    parts = []
+    depth = 0
+    i = start
+    while i < len(lines):
+        parts.append(lines[i].strip())
+        depth += lines[i].count("[") - lines[i].count("]")
+        i += 1
+        if depth <= 0:
+            break
+    return " ".join(parts), i
+
+
+def scan_comment_tags(path: str, text: str) -> Scan:
+    rust = path.endswith(".rs")
+    lines = text.splitlines()
+    result = Scan()
+    i = 0
+    while i < len(lines):
+        match = _COMMENT_TAG_RE.match(lines[i])
+        i += 1
+        if not match:
+            continue
+        ids = _comment_ids(match["ids"])
+        attributes = []
+        if rust:
+            # Attributes may also come before the tag, as in #[test] then the tag.
+            # Only one-line attributes are read in this direction.
+            j = i - 2
+            while j >= 0 and (
+                lines[j].lstrip().startswith("#[") or _COMMENT_RE.match(lines[j])
+            ):
+                if lines[j].lstrip().startswith("#["):
+                    attributes.append(lines[j].strip())
+                j -= 1
+        while i < len(lines):
+            more = _COMMENT_TAG_RE.match(lines[i])
+            if more:
+                ids += _comment_ids(more["ids"])
+                i += 1
+            elif rust and lines[i].lstrip().startswith("#"):
+                attribute, i = _read_rust_attribute(lines, i)
+                attributes.append(attribute)
+            elif _COMMENT_RE.match(lines[i]):
+                i += 1
+            else:
+                break
+        if i == len(lines):
+            break
+
+        test = None
+        excluded_by = None
+        if rust:
+            fn = _RUST_FN_RE.match(lines[i])
+            if fn and any(_RUST_TEST_RE.match(a) for a in attributes):
+                test = fn["name"]
+                if any(_RUST_IGNORE_RE.match(a) for a in attributes):
+                    excluded_by = "ignore"
+        else:
+            call = _JS_TEST_RE.match(lines[i])
+            if call:
+                mods = [m.strip() for m in call["mods"].split(".") if m.strip()]
+                # Prettier may wrap the title onto the next line, and an it.each
+                # table can run for dozens of lines before it.
+                following = "\n".join([lines[i][call.end() :], *lines[i + 1 :]])
+                test = _js_title(following, mods) or f"{call['fn']} at line {i + 1}"
+                if call["fn"].startswith("x"):
+                    excluded_by = call["fn"]
+                else:
+                    excluded_by = next((m for m in mods if m in _JS_EXCLUDING_MODS), None)
+        if test:
+            for mitigation in dict.fromkeys(ids):
+                result.tests.append(TaggedTest(mitigation, path, test, i + 1, excluded_by))
+    return result
+
 
 # Git
 
@@ -176,13 +325,10 @@ def read_blob(repo: str, commit: str, path: str) -> bytes | None:
         return None
 
 
-def scan_commit(repo: str, rev: str) -> Scan:
-    out = _git(repo, "rev-parse", "--verify", "--end-of-options", f"{rev}^{{commit}}")
-    commit = out.decode().strip()
+def _grep_files(repo: str, commit: str, text: str, globs: Iterable[str]) -> list[str]:
+    """Return the paths of files matching the globs that contain this text."""
     # git grep reads the tree directly, so only tracked files are scanned and no
-    # checkout of this revision is needed. Matching the mark rather than the bare
-    # word keeps prose in a file this Python can't parse from failing the scan.
-    # Exit status 1 means no matches.
+    # checkout of this revision is needed. Exit status 1 means no matches.
     out = _git(
         repo,
         "grep",
@@ -191,19 +337,29 @@ def scan_commit(repo: str, rev: str) -> Scan:
         "--text",
         "--fixed-strings",
         "-e",
-        f"pytest.mark.{TAG}",
+        text,
         commit,
         "--",
-        "*.py",
+        *globs,
         ok_codes=(0, 1),
     )
+    entries = out.decode("utf-8", errors="surrogateescape").split("\0")
+    return [entry.removeprefix(f"{commit}:") for entry in entries if entry]
+
+
+def scan_commit(repo: str, rev: str) -> Scan:
+    out = _git(repo, "rev-parse", "--verify", "--end-of-options", f"{rev}^{{commit}}")
+    commit = out.decode().strip()
     scan = Scan(commit=commit)
-    for entry in out.decode("utf-8", errors="surrogateescape").split("\0"):
-        if entry:
-            path = entry.removeprefix(f"{commit}:")
-            found = scan_python(path, _git(repo, "cat-file", "blob", f"{commit}:{path}"))
-            scan.tests += found.tests
-            scan.errors += found.errors
+    # Matching the mark rather than the bare word keeps prose in a file this
+    # Python can't parse from failing the scan.
+    for path in _grep_files(repo, commit, f"pytest.mark.{TAG}", ["*.py"]):
+        found = scan_python(path, _git(repo, "cat-file", "blob", f"{commit}:{path}"))
+        scan.tests += found.tests
+        scan.errors += found.errors
+    for path in _grep_files(repo, commit, f"{TAG}:", ["*.rs", *JS_GLOBS]):
+        source = _git(repo, "cat-file", "blob", f"{commit}:{path}")
+        scan.tests += scan_comment_tags(path, source.decode("utf-8", errors="replace")).tests
     return scan
 
 
@@ -344,8 +500,8 @@ def render_summary(
             ]
     lines += [
         (f"At head, {len({t.mitigation for t in head.tests})} mitigations have tagged tests and "
-        f"{len(head.covered_counts())} have covered tests. A tagged test marked skip or "
-        "xfail is not covered."),
+        f"{len(head.covered_counts())} have covered tests. A tagged test that is skipped "
+        "or expected to fail is not covered."),
         "",
     ]
 
@@ -378,7 +534,7 @@ def render_summary(
 def scan_json(scan: Scan, repo_name: str, server_url: str) -> dict:
     """Return the scan as JSON-ready data, for the threat model's coverage report.
 
-    Each ID maps to its covered tests. Skipped and xfail tests are left out, so they
+    Each ID maps to its covered tests. Skipped and expected-to-fail tests are left out, so they
     never count as coverage in the report. Entries have exactly the keys of ratm's
     TestRef(repo, path, name, line, url), since TestRef rejects any other key.
     """

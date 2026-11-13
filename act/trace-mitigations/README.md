@@ -1,10 +1,10 @@
 # freedomofpress/actionslib/act/trace-mitigations
 
-This action looks for Python tests that are tagged with SecureDrop threat-model mitigation
-IDs (like `MITIG52` or `MITIGQW3`), and fails CI when a mitigation that used to have tests
-is left without any. It reads the source straight from git and never runs the tests. The
-output only ever mentions mitigation IDs, because the titles live in the
-[threat model](https://github.com/freedomofpress/securedrop-threat-model).
+This action looks for Python, Rust, and JS/TS tests that are tagged with SecureDrop
+threat-model mitigation IDs (like `MITIG52` or `MITIGQW3`), and fails CI when a mitigation
+that used to have tests is left without any. It reads the source straight from git and
+never runs the tests. The output only ever mentions mitigation IDs, because the titles
+live in the [threat model](https://github.com/freedomofpress/securedrop-threat-model).
 
 See [the `action.yml` file](action.yml) for details on this action's inputs. For pull
 requests, the
@@ -12,6 +12,8 @@ requests, the
 wraps this action along with a checkout.
 
 ## Tagging Tests
+
+### Python
 
 Add the `mitigates` mark to a test function or class, or to a module's or class's
 `pytestmark`. If you mark a class or module, every `test*` function inside it is tagged.
@@ -24,16 +26,43 @@ def test_apparmor_enforced(host): ...
 If your repo runs pytest with `--strict-markers`, you'll need to register the marker:
 `mitigates(*ids): threat-model mitigations this test verifies`.
 
-Tagging for Rust and JS/TS tests isn't implemented yet.
+### Rust and JS/TS
+
+Put a `mitigates:` comment directly above the test. In Rust that's a `fn` with a `#[test]`
+attribute (or one like `#[tokio::test]`). In JS/TS it's an `it`, `test`, `describe`, or
+`suite` call, including forms like `it.each(...)`. Other comments, more tags, and Rust
+attributes can sit between the tag and the test, but a blank line or code can't. Rust
+attributes can also come before the tag.
+
+```rust
+// mitigates: MITIG1, MITIG2
+#[test]
+fn test_rejects_unknown_fields() {}
+```
+
+```ts
+// mitigates: MITIG3
+it("rejects unknown fields", () => {});
+```
+
+The scan reads these files line by line, so a tag on a `describe` counts as one test, and
+isn't passed to the tests inside it. It also doesn't apply to Rust `mod` blocks.
 
 ## Coverage
 
-A tagged test doesn't count if it, its class, or its module is marked `skip`, `skipif`, or
-`xfail`. That includes conditional marks, since the scan has no way to evaluate the
-condition. Other marks, like `skip_in_prod`, are ignored.
+A tagged test doesn't count if it's skipped or expected to fail:
 
-The scan won't notice a `pytest.skip()` call inside a test, or marks passed through
-`pytest.param`.
+- **Python:** the test, its class, or its module is marked `skip`, `skipif`, or `xfail`.
+  Other marks, like `skip_in_prod`, are ignored.
+- **Rust:** the test has `#[ignore]`, or a `#[cfg_attr(..., ignore)]`.
+- **JS/TS:** the call is `xit`, `xtest`, or `xdescribe`, or uses `.skip`, `.todo`,
+  `.fails`, `.skipIf`, or `.runIf`.
+
+That includes conditional skips, since the scan has no way to evaluate the condition.
+
+The scan won't notice a skip that happens while the test runs, like `pytest.skip()` or
+marks passed through `pytest.param`. It also doesn't see a skip on an enclosing
+`describe`, so a tagged `it` inside `describe.skip(...)` still counts.
 
 When `base` is set, the action fails if a mitigation had at least one test at base and has
 none at head (for example, because its only test was removed). If only some of a
