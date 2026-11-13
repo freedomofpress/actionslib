@@ -13,12 +13,14 @@ composite actions for use at FPF.
   - [publish-r2](.github/workflows/publish-r2.yaml)
   - [oci-build](.github/workflows/oci-build.yaml)
   - [setup-nix](.github/workflows/setup-nix.yaml)
+  - [trace-mitigations](.github/workflows/trace-mitigations.yaml)
   - [update-k8s-trigger](.github/workflows/update-k8s-trigger.yaml)
 - [Available Composite Actions](#available-composite-actions)
   - [poetry](act/poetry/)
   - [delete-artifact](act/delete-artifact/)
   - [signed-commit](act/signed-commit/)
   - [setup-nix](act/setup-nix/)
+  - [trace-mitigations](act/trace-mitigations/)
 - [Developer Documentation](#developer-documentation)
 - [License](#license)
 
@@ -133,25 +135,27 @@ they support.
 
 Index of available Reusable Workflows in this repository.
 
-| Name                 | Description                                                                                                                 | Docs                                          | Tests |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ----- |
-| `cleanup-artifacts`  | Delete multiple Github Actions Artifacts in one workflow call                                                               |                                               |       |
-| `lint-actions`       | Use [Zizmor](https://woodruffw.github.io/zizmor/) to run static analysis checks on Github Actions workflow files.           | [:link:](.github/workflows/lint-actions.yaml) |       |
-| `publish-r2`         | Use rclone to publish static content to Cloudflare's R2                                                                     | [:link:](.github/workflows/publish-r2.yaml)   |       |
-| `oci-build`          | Use [buildah](https://buildah.io/) to build (and [podman](https://podman.io/) to optionally publish) an OCI container image | [:link:](.github/workflows/oci-build.yaml)    |       |
-| `setup-nix`          | Check out, set up Nix via [`act/setup-nix`](act/setup-nix/), and run a script                                               | [:link:](.github/workflows/setup-nix.yaml)    |       |
-| `update-k8s-trigger` | Trigger a run of the `update-sources` workflow in K8s-Configs to rebuild K8s manifests for deployment                       |                                               |       |
+| Name                 | Description                                                                                                                 | Docs                                               | Tests |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ----- |
+| `cleanup-artifacts`  | Delete multiple Github Actions Artifacts in one workflow call                                                               |                                                    |       |
+| `lint-actions`       | Use [Zizmor](https://woodruffw.github.io/zizmor/) to run static analysis checks on Github Actions workflow files.           | [:link:](.github/workflows/lint-actions.yaml)      |       |
+| `publish-r2`         | Use rclone to publish static content to Cloudflare's R2                                                                     | [:link:](.github/workflows/publish-r2.yaml)        |       |
+| `oci-build`          | Use [buildah](https://buildah.io/) to build (and [podman](https://podman.io/) to optionally publish) an OCI container image | [:link:](.github/workflows/oci-build.yaml)         |       |
+| `setup-nix`          | Check out, set up Nix via [`act/setup-nix`](act/setup-nix/), and run a script                                               | [:link:](.github/workflows/setup-nix.yaml)         |       |
+| `trace-mitigations`  | Fail a pull request that leaves a threat-model mitigation with no covered test                                              | [:link:](.github/workflows/trace-mitigations.yaml) |       |
+| `update-k8s-trigger` | Trigger a run of the `update-sources` workflow in K8s-Configs to rebuild K8s manifests for deployment                       |                                                    |       |
 
 ## Available Composite Actions
 
 Index of available Composite Actions in the repository.
 
-| Name              | Description                                                                                                                                                                                  | Docs                           | Tests                                                                                                                                                                                                               |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `poetry`          | Sets up a local Python environment using [Poetry](https://python-poetry.org/)                                                                                                                | [:link:](act/poetry/)          | [![Test:FPF/Poetry](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_poetry.yaml/badge.svg)](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_poetry.yaml)          |
-| `delete-artifact` | Deletes a [Github Action Artifact](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow) given the artifact's name | [:link:](act/delete-artifact/) |                                                                                                                                                                                                                     |
-| `signed-commit`   | Creates a GPG signed commit using the Github API                                                                                                                                             | [:link:](act/signed-commit/)   |                                                                                                                                                                                                                     |
-| `setup-nix`       | Installs a digest-verified [Nix](https://nixos.org/) and restores the Nix store from cache                                                                                                   | [:link:](act/setup-nix/)       | [![Test:FPF/Setup-Nix](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_setup_nix.yaml/badge.svg)](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_setup_nix.yaml) |
+| Name                | Description                                                                                                                                                                                  | Docs                             | Tests                                                                                                                                                                                                                                       |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `poetry`            | Sets up a local Python environment using [Poetry](https://python-poetry.org/)                                                                                                                | [:link:](act/poetry/)            | [![Test:FPF/Poetry](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_poetry.yaml/badge.svg)](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_poetry.yaml)                                  |
+| `delete-artifact`   | Deletes a [Github Action Artifact](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow) given the artifact's name | [:link:](act/delete-artifact/)   |                                                                                                                                                                                                                                             |
+| `signed-commit`     | Creates a GPG signed commit using the Github API                                                                                                                                             | [:link:](act/signed-commit/)     |                                                                                                                                                                                                                                             |
+| `setup-nix`         | Installs a digest-verified [Nix](https://nixos.org/) and restores the Nix store from cache                                                                                                   | [:link:](act/setup-nix/)         | [![Test:FPF/Setup-Nix](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_setup_nix.yaml/badge.svg)](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_setup_nix.yaml)                         |
+| `trace-mitigations` | Finds tests tagged with threat-model mitigation IDs and compares base and head                                                                                                               | [:link:](act/trace-mitigations/) | [![Test:FPF/Trace-Mitigations](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_trace_mitigations.yaml/badge.svg)](https://github.com/freedomofpress/actionslib/actions/workflows/_test_act_trace_mitigations.yaml) |
 
 ## Developing
 
