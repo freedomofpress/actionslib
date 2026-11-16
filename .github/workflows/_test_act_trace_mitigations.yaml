@@ -1,0 +1,90 @@
+---
+name: Test:FPF/Trace-Mitigations
+
+on:
+  workflow_dispatch:
+
+  pull_request:
+    types: ['opened', 'synchronize']
+    paths:
+    - 'act/trace-mitigations/**'
+    - '.github/workflows/trace-mitigations.yaml'
+    - '.github/workflows/_test_act_trace_mitigations.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  test-trace-mitigations:
+    name: Py${{ matrix.python-version }}
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        # The oldest supported Python, and the newest, which the action uses.
+        python-version:
+        - '3.10'
+        - '3.x'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+
+    - name: Install python ${{ matrix.python-version }}
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Run tests
+      run: python -m unittest discover -s act/trace-mitigations -v
+
+  test-action:
+    name: Action
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+
+    - name: Create a repository whose head drops a mitigation's last test
+      id: fixture
+      run: |
+        set -euo pipefail
+        repo="$RUNNER_TEMP/fixture"
+        git init -q -b main "$repo"
+        cd "$repo"
+        git config user.name test
+        git config user.email test@example.com
+        mkdir -p tests
+        printf '%s\n' 'import pytest' '' \
+          '@pytest.mark.mitigates("MITIG52", "MITIGQW1")' \
+          'def test_swap_disabled():' '    pass' >tests/test_swap.py
+        git add -A
+        git commit -q -m base
+        echo "base=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
+        git rm -q tests/test_swap.py
+        mkdir -p .github
+        printf '%s\n' 'MITIGQW1: moved to openQA' >.github/mitigation-exceptions.txt
+        git add -A
+        git commit -q -m head
+        echo "path=$repo" >>"$GITHUB_OUTPUT"
+
+    - name: Trace mitigations, only MITIGQW1 allowed (expected to fail on MITIG52)
+      id: lost
+      continue-on-error: true
+      uses: ./act/trace-mitigations
+      with:
+        path: ${{ steps.fixture.outputs.path }}
+        base: ${{ steps.fixture.outputs.base }}
+
+    - name: Verify results
+      env:
+        LOST_OUTCOME: ${{ steps.lost.outcome }}
+      run: |
+        set -euo pipefail
+        [[ "$LOST_OUTCOME" == failure ]] || {
+          echo "FAIL: expected MITIG52's loss to fail, got $LOST_OUTCOME"
+          exit 1
+        }
+        echo "PASS: MITIG52's loss failed"
